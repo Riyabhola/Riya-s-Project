@@ -6,3 +6,5 @@ textblob
 pandas
 plotly
 sentence-transformers
+SQLAlchemy
+psycopg2-binary

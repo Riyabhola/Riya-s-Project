@@ -1,98 +1,113 @@
-import sqlite3
 import pandas as pd
 import chromadb
 from chromadb.utils import embedding_functions
 import os
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text, create_engine
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+import datetime
 
-DB_PATH = "data/student_interactions.db"
+# --- Configuration ---
+# Fallback to local SQLite if no DATABASE_URL is provided (Professional standard)
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/student_interactions.db")
 CHROMA_PATH = "data/chroma_db"
 
+# --- SQLAlchemy Setup ---
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+class Interaction(Base):
+    __tablename__ = "interactions"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    user_id = Column(String(255))
+    query = Column(Text)
+    intent = Column(String(100))
+    response = Column(Text)
+    sentiment = Column(Float)
+
+class Appointment(Base):
+    __tablename__ = "appointments"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    student_id = Column(String(255))
+    advisor_id = Column(String(255))
+    date_time = Column(String(100))
+    status = Column(String(50), default="Scheduled")
+
 def init_sqlite():
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    # Interaction logs
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS interactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            user_id TEXT,
-            query TEXT,
-            intent TEXT,
-            response TEXT,
-            sentiment REAL
-        )
-    ''')
-    
-    # Appointments
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS appointments (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            student_id TEXT,
-            advisor_id TEXT,
-            date_time TEXT,
-            status TEXT DEFAULT 'Scheduled'
-        )
-    ''')
-    
-    conn.commit()
-    conn.close()
+    """Initializes the relational database schema (SQLite/Postgres)."""
+    Base.metadata.create_all(bind=engine)
 
 def log_interaction(user_id, query, intent, response, sentiment):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO interactions (user_id, query, intent, response, sentiment)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (user_id, query, intent, response, sentiment))
-    conn.commit()
-    conn.close()
+    db = SessionLocal()
+    try:
+        new_interaction = Interaction(
+            user_id=user_id,
+            query=query,
+            intent=intent,
+            response=response,
+            sentiment=sentiment
+        )
+        db.add(new_interaction)
+        db.commit()
+    finally:
+        db.close()
 
 def get_interactions():
-    conn = sqlite3.connect(DB_PATH)
-    df = pd.read_sql_query("SELECT * FROM interactions", conn)
-    conn.close()
-    return df
+    db = SessionLocal()
+    try:
+        # Load into DataFrame for analytics compatibility
+        query = db.query(Interaction)
+        df = pd.read_sql(query.statement, db.bind)
+        return df
+    finally:
+        db.close()
 
 def book_appointment(student_id, advisor_id, date_time):
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO appointments (student_id, advisor_id, date_time)
-        VALUES (?, ?, ?)
-    ''', (student_id, advisor_id, date_time))
-    conn.commit()
-    conn.close()
+    db = SessionLocal()
+    try:
+        new_appointment = Appointment(
+            student_id=student_id,
+            advisor_id=advisor_id,
+            date_time=date_time
+        )
+        db.add(new_appointment)
+        db.commit()
+    finally:
+        db.close()
 
+# --- ChromaDB (Vector Knowledge Base) ---
 def init_chroma():
+    """Initializes ChromaDB from CSV files if not already present."""
     client = chromadb.PersistentClient(path=CHROMA_PATH)
-    # Using default embedding function (sentence-transformers)
     emb_fn = embedding_functions.DefaultEmbeddingFunction()
     
     # 1. Policies Collection
     policy_collection = client.get_or_create_collection(name="policies", embedding_function=emb_fn)
     if policy_collection.count() == 0:
-        policies_df = pd.read_csv("data/policies.csv")
-        policy_collection.add(
-            documents=policies_df['content'].tolist(),
-            metadatas=[{"title": t} for t in policies_df['title'].tolist()],
-            ids=policies_df['policy_id'].tolist()
-        )
+        if os.path.exists("data/policies.csv"):
+            policies_df = pd.read_csv("data/policies.csv")
+            policy_collection.add(
+                documents=policies_df['content'].tolist(),
+                metadatas=[{"title": t} for t in policies_df['title'].tolist()],
+                ids=policies_df['policy_id'].tolist()
+            )
     
-    # 2. Courses Collection for Semantic Recommendation
+    # 2. Courses Collection
     course_collection = client.get_or_create_collection(name="courses", embedding_function=emb_fn)
     if course_collection.count() == 0:
-        courses_df = pd.read_csv("data/courses.csv")
-        # Combine name and description for better semantic matching
-        course_docs = (courses_df['name'] + ": " + courses_df['description']).tolist()
-        course_ids = courses_df['course_id'].tolist()
-        course_metadatas = courses_df.to_dict('records')
-        
-        course_collection.add(
-            documents=course_docs,
-            metadatas=course_metadatas,
-            ids=course_ids
-        )
+        if os.path.exists("data/courses.csv"):
+            courses_df = pd.read_csv("data/courses.csv")
+            course_docs = (courses_df['name'] + ": " + courses_df['description']).tolist()
+            course_ids = courses_df['course_id'].tolist()
+            course_metadatas = courses_df.to_dict('records')
+            
+            course_collection.add(
+                documents=course_docs,
+                metadatas=course_metadatas,
+                ids=course_ids
+            )
     
     return policy_collection, course_collection
 
@@ -116,9 +131,9 @@ def query_knowledge_base(query_text, n_results=1):
         query_texts=[query_text],
         n_results=n_results
     )
-    return results['documents'][0][0] if results['documents'] else "I'm sorry, I couldn't find any specific policy regarding that."
+    return results['documents'][0][0] if results['documents'] else "I'm sorry, I couldn't find any specific LPU policy regarding that."
 
 if __name__ == "__main__":
     init_sqlite()
     init_chroma()
-    print("Databases initialized.")
+    print("Databases initialized with SQLAlchemy abstraction.")
