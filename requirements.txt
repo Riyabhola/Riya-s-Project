@@ -1,6 +1,7 @@
 streamlit
 google-cloud-dialogflow
 chromadb
+protobuf<5.0.0
 textblob
 pandas
 plotly
