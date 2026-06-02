@@ -1,0 +1,7 @@
+policy_id,title,content
+P001,Grading Scale,"The university uses a 4.0 grading scale. A=4.0, B=3.0, C=2.0, D=1.0, F=0.0."
+P002,Credit Requirements,"To graduate with a Bachelor's degree, students must complete at least 120 credit hours."
+P003,Incomplete Grades,"An 'I' grade may be given if a student cannot complete coursework due to illness or emergency. It must be resolved within one semester."
+P004,Academic Probation,"Students with a cumulative GPA below 2.0 will be placed on academic probation."
+P005,Course Load,"A full-time student must take at least 12 credits per semester. Maximum load is 18 credits."
+P006,Major Declaration,"Students must declare a major before completing 60 credit hours."

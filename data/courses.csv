@@ -1,0 +1,11 @@
+course_id,name,department,credits,description,level
+CS101,Intro to Programming,Computer Science,3,Learn Python and basic algorithms,Introductory
+CS201,Data Structures,Computer Science,4,Learn about stacks queues and trees,Intermediate
+CS301,Algorithms,Computer Science,4,Advanced algorithm design and analysis,Advanced
+MATH101,Calculus I,Mathematics,4,Differentiation and integration,Introductory
+ENG101,College Writing,English,3,Effective writing and research skills,Introductory
+PSY101,Intro to Psychology,Psychology,3,Study of human mind and behavior,Introductory
+BIO101,General Biology,Biology,4,Basics of cell biology and genetics,Introductory
+BUS101,Intro to Business,Business,3,Basics of marketing finance and management,Introductory
+ART101,Art Appreciation,Art,3,Exploring visual arts and history,Introductory
+HIST101,World History,History,3,Major events in world history,Introductory
