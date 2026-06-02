@@ -3,11 +3,11 @@ import pandas as pd
 
 def run_tests():
     test_cases = [
-        {"query": "What is the grading scale?", "expected_intent": "query_policy"},
-        {"query": "Recommend some computer science courses", "expected_intent": "get_course_recommendation"},
-        {"query": "I want to book an appointment with an advisor", "expected_intent": "book_appointment"},
-        {"query": "Tell me about academic probation", "expected_intent": "query_policy"},
-        {"query": "Hello there", "expected_intent": "greeting"}
+        {"query": "What is the LPU attendance policy?", "expected_intent": "query_policy"},
+        {"query": "Recommend some Python programming courses at LPU", "expected_intent": "get_course_recommendation"},
+        {"query": "Book an appointment with an LPU advisor", "expected_intent": "book_appointment"},
+        {"query": "How do scholarships work?", "expected_intent": "query_policy"},
+        {"query": "Hi there", "expected_intent": "greeting"}
     ]
     
     results = []

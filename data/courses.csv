@@ -1,11 +1,11 @@
 course_id,name,department,credits,description,level
-CS101,Intro to Programming,Computer Science,3,Learn Python and basic algorithms,Introductory
-CS201,Data Structures,Computer Science,4,Learn about stacks queues and trees,Intermediate
-CS301,Algorithms,Computer Science,4,Advanced algorithm design and analysis,Advanced
-MATH101,Calculus I,Mathematics,4,Differentiation and integration,Introductory
-ENG101,College Writing,English,3,Effective writing and research skills,Introductory
-PSY101,Intro to Psychology,Psychology,3,Study of human mind and behavior,Introductory
-BIO101,General Biology,Biology,4,Basics of cell biology and genetics,Introductory
-BUS101,Intro to Business,Business,3,Basics of marketing finance and management,Introductory
-ART101,Art Appreciation,Art,3,Exploring visual arts and history,Introductory
-HIST101,World History,History,3,Major events in world history,Introductory
+CSE101,C Programming,Computer Science,4,Foundational course covering C syntax loops and memory management,Introductory
+CSE202,Data Structures & Algorithms,Computer Science,4,In-depth study of linked lists trees and sorting algorithms using C++ or Java,Intermediate
+INT213,Python Programming,Information Technology,4,Focuses on data analysis and automation using Python libraries,Intermediate
+MGT101,Principles of Management,Management,3,Introduction to organizational behavior and management theories,Introductory
+ECE201,Digital Electronics,Electronics,4,Study of logic gates flip-flops and circuit design,Intermediate
+MTH165,Calculus & Algebra,Mathematics,4,Complex variables and linear algebra for engineering students,Introductory
+ENG101,Communication Skills I,English,2,Enhancing professional writing and verbal communication,Introductory
+MBA501,Financial Management,Management,4,Advanced financial analysis for business decision making,Advanced
+BI0101,Cell Biology,Biotechnology,4,Fundamental study of cell structure and genetic mechanisms,Introductory
+CHE110,Engineering Chemistry,Chemistry,3,Applied chemistry for industrial and engineering applications,Introductory

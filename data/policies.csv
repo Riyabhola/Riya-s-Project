@@ -1,7 +1,7 @@
 policy_id,title,content
-P001,Grading Scale,"The university uses a 4.0 grading scale. A=4.0, B=3.0, C=2.0, D=1.0, F=0.0."
-P002,Credit Requirements,"To graduate with a Bachelor's degree, students must complete at least 120 credit hours."
-P003,Incomplete Grades,"An 'I' grade may be given if a student cannot complete coursework due to illness or emergency. It must be resolved within one semester."
-P004,Academic Probation,"Students with a cumulative GPA below 2.0 will be placed on academic probation."
-P005,Course Load,"A full-time student must take at least 12 credits per semester. Maximum load is 18 credits."
-P006,Major Declaration,"Students must declare a major before completing 60 credit hours."
+LPU001,Attendance Policy,"Lovely Professional University (LPU) requires a minimum of 75% attendance in all courses. Students falling below this threshold may be debarred from appearing in end-term examinations."
+LPU002,Grading System,"LPU follows a 10-point CGPA system. Grades range from O (Outstanding) to E (Fail), with O equivalent to 10 points and D equivalent to 4 points."
+LPU003,Academic Probation,"Students with a CGPA below 4.0 at the end of an academic year are placed on academic probation and must attend remedial classes."
+LPU004,Scholarship Criteria,"LPU offers various scholarships based on LPUNEST scores, previous academic performance, and sports achievements. Students must maintain a minimum CGPA of 6.5 to continue scholarships."
+LPU005,Placement Eligibility,"To be eligible for LPU placement drives, students must have a CGPA of 6.0 or above and no active backlogs."
+LPU006,Course Registration,"Course registration at LPU is handled through the UMS (University Management System) portal during the designated registration window each semester."

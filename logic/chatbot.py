@@ -1,15 +1,30 @@
 import os
 from textblob import TextBlob
-from logic.database import query_knowledge_base, log_interaction, book_appointment
+from logic.database import query_knowledge_base, log_interaction, book_appointment, query_courses
 import pandas as pd
 import random
+
+# Dialogflow Configuration (Placeholder for production)
+# from google.cloud import dialogflow_v2 as dialogflow
+# DIALOGFLOW_PROJECT_ID = os.getenv("DIALOGFLOW_PROJECT_ID")
+# DIALOGFLOW_SESSION_ID = "current-session"
+
+def detect_intent(text, user_id):
+    """
+    Detects intent using Dialogflow if configured, otherwise falls back to mock.
+    """
+    if os.getenv("DIALOGFLOW_PROJECT_ID"):
+        # Real Dialogflow integration would go here
+        # return detect_intent_dialogflow(text, user_id)
+        pass
+    return detect_intent_mock(text)
 
 # Mock Dialogflow logic
 def detect_intent_mock(text):
     text = text.lower()
-    if any(k in text for k in ["recommend", "course", "suggest", "take", "classes"]):
+    if any(k in text for k in ["recommend", "course", "suggest", "take", "classes", "interest", "learn"]):
         return "get_course_recommendation", {}
-    elif any(k in text for k in ["policy", "rule", "requirement", "grading", "scale", "probation", "credit", "hours", "graduate"]):
+    elif any(k in text for k in ["policy", "rule", "requirement", "grading", "scale", "probation", "credit", "hours", "graduate", "attendance", "scholarship", "ums", "placement"]):
         return "query_policy", {}
     elif any(k in text for k in ["appointment", "schedule", "book", "meeting", "advisor", "see someone"]):
         return "book_appointment", {"date": "tomorrow at 10am"}
@@ -19,44 +34,22 @@ def detect_intent_mock(text):
         return "general_inquiry", {}
 
 def get_course_recommendations(query_text=""):
-    courses_df = pd.read_csv("data/courses.csv")
-    query_text = query_text.lower()
+    """
+    Uses semantic search (ChromaDB) to find relevant LPU courses.
+    """
+    recommendations = query_courses(query_text)
     
-    # Try to identify department from query
-    departments = courses_df['department'].unique()
-    target_dept = None
-    for dept in departments:
-        if dept.lower() in query_text:
-            target_dept = dept
-            break
-            
-    # Try to identify level from query
-    levels = courses_df['level'].unique()
-    target_level = None
-    for lvl in levels:
-        if lvl.lower() in query_text:
-            target_level = lvl
-            break
-
-    recommendations = courses_df
-    if target_dept:
-        recommendations = recommendations[recommendations['department'] == target_dept]
-    if target_level:
-        recommendations = recommendations[recommendations['level'] == target_level]
-    
-    if recommendations.empty or (not target_dept and not target_level):
-        recommendations = courses_df.sample(min(3, len(courses_df)))
-    else:
-        recommendations = recommendations.head(3)
+    if not recommendations:
+        return "I'm sorry, I couldn't find any LPU courses matching your interests at the moment."
         
-    response = "Based on your interest, I recommend the following courses:\n"
-    for _, row in recommendations.iterrows():
-        response += f"- {row['course_id']}: {row['name']} ({row['credits']} credits) - {row['description']}\n"
+    response = "Based on your interest, I recommend the following courses at Lovely Professional University:\n"
+    for course in recommendations:
+        response += f"- **{course['course_id']}**: {course['name']} ({course['credits']} credits)  \n  *{course['description']}*\n"
     return response
 
 def handle_query(user_id, query_text):
     # 1. Detect Intent
-    intent, parameters = detect_intent_mock(query_text)
+    intent, parameters = detect_intent(query_text, user_id)
     
     # 2. Analyze Sentiment
     sentiment = TextBlob(query_text).sentiment.polarity
@@ -69,12 +62,12 @@ def handle_query(user_id, query_text):
     elif intent == "book_appointment":
         # Simulate booking
         date_time = parameters.get("date", "Next available slot")
-        book_appointment(user_id, "Advisor Smith", date_time)
-        response = f"I've scheduled an appointment for you with Advisor Smith on {date_time}. You will receive a confirmation email shortly."
+        book_appointment(user_id, "LPU Faculty Advisor", date_time)
+        response = f"I've scheduled an appointment for you with an LPU Faculty Advisor on {date_time}. Please check your LPU UMS email for the confirmation link."
     elif intent == "greeting":
-        response = "Hello! I'm your AI Academic Advisor. How can I assist you with your academic planning today?"
+        response = "Hello! I'm your LPU AI Academic Advisor. How can I assist you with your LPU academic planning or university policy queries today?"
     else:
-        response = "I'm your academic advisor. You can ask me about course recommendations, university policies, or schedule an appointment. For example, try 'What is the grading scale?' or 'Recommend some CS courses'."
+        response = "I am your LPU academic advisor. You can ask me about university-specific course recommendations, LPU academic policies (like attendance or grading), or schedule an appointment with a faculty advisor."
 
     # 4. Log Interaction
     log_interaction(user_id, query_text, intent, response, sentiment)

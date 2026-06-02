@@ -12,7 +12,7 @@ import uuid
 init_sqlite()
 init_chroma()
 
-st.set_page_config(page_title="Academic Advising AI", layout="wide")
+st.set_page_config(page_title="LPU Academic Advisor", layout="wide")
 
 # Session State for Chat
 if "messages" not in st.session_state:
@@ -21,17 +21,39 @@ if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
 
 def main():
-    st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Chatbot", "Analytics Dashboard"])
+    st.sidebar.title("🦁 LPU Advisor Hub")
+    st.sidebar.info("This AI-powered assistant is dedicated to students of Lovely Professional University (LPU), helping with course selection, LPU policies, and scheduling appointments with university advisors.")
+    
+    page = st.sidebar.radio("Navigation", ["💬 LPU Chatbot", "📊 Student Insights"])
 
-    if page == "Chatbot":
+    if st.sidebar.button("🗑️ Clear Conversation"):
+        st.session_state.messages = []
+        st.rerun()
+
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("Common Inquiries:")
+    examples = [
+        "What is the LPU attendance policy?",
+        "Recommend CSE courses for data science",
+        "How do scholarships work at LPU?",
+        "Book a session with an LPU advisor"
+    ]
+    for ex in examples:
+        if st.sidebar.button(ex):
+            # Simulate input by setting it and rerunning (simplified for streamlit)
+            st.session_state.messages.append({"role": "user", "content": ex})
+            response, intent, sentiment = handle_query(st.session_state.user_id, ex)
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            st.rerun()
+
+    if page == "💬 LPU Chatbot":
         show_chat()
     else:
         show_dashboard()
 
 def show_chat():
-    st.title("🎓 Academic Advising Chatbot")
-    st.markdown("Ask me about course recommendations, policies, or book an appointment.")
+    st.title("🎓 LPU Academic Advisor")
+    st.markdown("Welcome to the LPU AI Support. Ask about course recommendations, LPU academic policies, or book an appointment.")
 
     # Display chat messages
     for message in st.session_state.messages:

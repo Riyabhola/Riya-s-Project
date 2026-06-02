@@ -4,7 +4,7 @@ import chromadb
 from chromadb.utils import embedding_functions
 import os
 
-DB_PATH = "data/academic_advising.db"
+DB_PATH = "data/student_interactions.db"
 CHROMA_PATH = "data/chroma_db"
 
 def init_sqlite():
@@ -69,16 +69,43 @@ def init_chroma():
     # Using default embedding function (sentence-transformers)
     emb_fn = embedding_functions.DefaultEmbeddingFunction()
     
-    collection = client.get_or_create_collection(name="policies", embedding_function=emb_fn)
-    
-    if collection.count() == 0:
+    # 1. Policies Collection
+    policy_collection = client.get_or_create_collection(name="policies", embedding_function=emb_fn)
+    if policy_collection.count() == 0:
         policies_df = pd.read_csv("data/policies.csv")
-        collection.add(
+        policy_collection.add(
             documents=policies_df['content'].tolist(),
             metadatas=[{"title": t} for t in policies_df['title'].tolist()],
             ids=policies_df['policy_id'].tolist()
         )
-    return collection
+    
+    # 2. Courses Collection for Semantic Recommendation
+    course_collection = client.get_or_create_collection(name="courses", embedding_function=emb_fn)
+    if course_collection.count() == 0:
+        courses_df = pd.read_csv("data/courses.csv")
+        # Combine name and description for better semantic matching
+        course_docs = (courses_df['name'] + ": " + courses_df['description']).tolist()
+        course_ids = courses_df['course_id'].tolist()
+        course_metadatas = courses_df.to_dict('records')
+        
+        course_collection.add(
+            documents=course_docs,
+            metadatas=course_metadatas,
+            ids=course_ids
+        )
+    
+    return policy_collection, course_collection
+
+def query_courses(query_text, n_results=3):
+    client = chromadb.PersistentClient(path=CHROMA_PATH)
+    emb_fn = embedding_functions.DefaultEmbeddingFunction()
+    collection = client.get_collection(name="courses", embedding_function=emb_fn)
+    
+    results = collection.query(
+        query_texts=[query_text],
+        n_results=n_results
+    )
+    return results['metadatas'][0] if results['metadatas'] else []
 
 def query_knowledge_base(query_text, n_results=1):
     client = chromadb.PersistentClient(path=CHROMA_PATH)
