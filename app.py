@@ -1,3 +1,7 @@
+import os
+# Force pure Python implementation of protobuf for Python 3.14 compatibility
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 import streamlit as st
 from logic.chatbot import handle_query
 from logic.analytics import get_analytics_data
