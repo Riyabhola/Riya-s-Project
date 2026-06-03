@@ -22,5 +22,5 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Run accuracy tests
-      run: python logic/test_accuracy.py
+    - name: Run standard verification suite
+      run: python verification_suite.py

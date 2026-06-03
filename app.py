@@ -21,7 +21,7 @@ if "user_id" not in st.session_state:
 
 def main():
     st.sidebar.title("🦁 LPU Advisor Hub")
-    st.sidebar.info("Dedicated AI Advisor for Lovely Professional University students. 100% Cloud-Native & Puter-Powered.")
+    st.sidebar.info("Dedicated AI Advisor for Lovely Professional University students.")
     
     page = st.sidebar.radio("Navigation", ["💬 LPU Chatbot", "📊 Student Insights"])
 
@@ -78,17 +78,41 @@ def show_chat():
             st.session_state.messages.append({"role": "assistant", "content": res, "use_puter": use_puter, "puter_prompt": p_prompt})
 
 def show_dashboard():
-    st.title("📊 Student Interaction Analytics")
-    fig1, fig2, fig3, avg = advisor_logic.get_analytics_data()
-    if fig1 is None:
+    st.title("📊 Student Insights Dashboard")
+    st.markdown("Executive overview of AI-student interactions and university academic sentiment.")
+    
+    # Fetch enhanced data
+    data = advisor_logic.get_analytics_data()
+    if data[0] is None:
         st.warning("Start a conversation to see analytics!")
         return
-    c1, c2 = st.columns(2)
-    with c1: st.plotly_chart(fig1, use_container_width=True)
-    with c2: 
-        st.metric("Avg Sentiment", f"{avg:.2f}")
-        st.plotly_chart(fig3, use_container_width=True)
-    st.plotly_chart(fig2, use_container_width=True)
+    
+    fig_intents, fig_sentiment, fig_dist, avg_sentiment, metrics = data
+
+    # 1. KPI Ribbon
+    kpi1, kpi2, kpi3 = st.columns(3)
+    with kpi1:
+        st.metric("Total Inquiries", metrics['total'], delta=None)
+    with kpi2:
+        sentiment_label = "Positive" if avg_sentiment > 0.1 else ("Negative" if avg_sentiment < -0.1 else "Neutral")
+        st.metric("Average Sentiment", f"{avg_sentiment:.2f}", delta=sentiment_label)
+    with kpi3:
+        st.metric("Top Student Concern", metrics['top'].replace('_', ' ').title())
+
+    st.markdown("---")
+
+    # 2. Primary Analytics Row
+    col1, col2 = st.columns([1, 1.5])
+    with col1:
+        with st.container(border=True):
+            st.plotly_chart(fig_intents, use_container_width=True)
+    with col2:
+        with st.container(border=True):
+            st.plotly_chart(fig_dist, use_container_width=True)
+
+    # 3. Time Series Analytics
+    with st.container(border=True):
+        st.plotly_chart(fig_sentiment, use_container_width=True)
 
 if __name__ == "__main__":
     main()

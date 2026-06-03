@@ -44,16 +44,13 @@ An AI-powered academic advising system built with **Streamlit**, **ChromaDB (RAG
    ```
 
 ## 🧪 Testing
-To run the conversational accuracy tests:
+To run the standard verification suite (Bare Mode):
 ```bash
-python logic/test_accuracy.py
+python verification_suite.py
 ```
 
 ## 📊 Sample Data
-The project includes a sample data generator to populate the analytics dashboard:
-```bash
-python logic/generate_sample_data.py
-```
+The application automatically seeds the knowledge base from `data/` on the first run.
 
 ## 🤝 Contributing
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

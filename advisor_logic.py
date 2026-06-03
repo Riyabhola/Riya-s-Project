@@ -1,5 +1,10 @@
 import os
+from dotenv import load_dotenv
 import pandas as pd
+
+# Load environment variables from .env file
+load_dotenv()
+
 import datetime
 import uuid
 import asyncio
@@ -90,6 +95,7 @@ def init_online_db():
     finally:
         db.close()
 
+@st.cache_data(show_spinner=False, ttl=3600)
 def query_knowledge_base(query_text):
     if not SessionLocal: return "Database connection error."
     db = SessionLocal()
@@ -109,6 +115,7 @@ def query_knowledge_base(query_text):
     finally:
         db.close()
 
+@st.cache_data(show_spinner=False, ttl=3600)
 def query_courses(query_text, n=3):
     if not SessionLocal: return []
     db = SessionLocal()
@@ -211,14 +218,48 @@ def handle_query(user_id, query):
     return response, intent, sentiment
 
 def get_analytics_data():
-    if not SessionLocal: return None, None, None, None
+    if not SessionLocal: return None, None, None, None, None
     db = SessionLocal()
     try:
         df = pd.read_sql(db.query(Interaction).statement, db.bind)
-        if df.empty: return None, None, None, None
-        fig_intents = px.pie(df['intent'].value_counts().reset_index(), values='count', names='intent', title='Interaction by Intent', hole=0.4)
-        fig_sentiment = px.line(df, x='timestamp', y='sentiment', title='Student Sentiment Over Time')
+        if df.empty: return None, None, None, None, None
+        
+        # 1. Intent Distribution (Professional Pie/Donut)
+        fig_intents = px.pie(
+            df['intent'].value_counts().reset_index(), 
+            values='count', names='intent', 
+            title='<b>Interaction Distribution by Intent</b>',
+            hole=0.5,
+            color_discrete_sequence=px.colors.qualitative.Pastel
+        )
+        fig_intents.update_traces(textposition='inside', textinfo='percent+label')
+        fig_intents.update_layout(showlegend=False, margin=dict(t=40, b=0, l=0, r=0))
+
+        # 2. Sentiment Trend (Time Series)
+        df['timestamp'] = pd.to_datetime(df['timestamp'])
+        df_sorted = df.sort_values('timestamp')
+        fig_sentiment = px.area(
+            df_sorted, x='timestamp', y='sentiment', 
+            title='<b>Student Sentiment Pulse (Live Trend)</b>',
+            line_shape='spline',
+            color_discrete_sequence=['#2e7d32' if df['sentiment'].mean() > 0 else '#d32f2f']
+        )
+        fig_sentiment.update_layout(xaxis_title="Time of Interaction", yaxis_title="Sentiment Score")
+
+        # 3. Sentiment Distribution (Bar)
         df['cat'] = df['sentiment'].apply(lambda x: 'Positive' if x > 0.1 else ('Negative' if x < -0.1 else 'Neutral'))
-        fig_dist = px.bar(df['cat'].value_counts().reset_index(), x='cat', y='count', title='Sentiment Distribution', color='cat')
-        return fig_intents, fig_sentiment, fig_dist, df['sentiment'].mean()
+        sentiment_counts = df['cat'].value_counts().reset_index()
+        fig_dist = px.bar(
+            sentiment_counts, x='cat', y='count', 
+            title='<b>Sentiment Volume</b>',
+            color='cat',
+            color_discrete_map={'Positive': '#2e7d32', 'Neutral': '#ffa000', 'Negative': '#d32f2f'}
+        )
+        fig_dist.update_layout(showlegend=False, xaxis_title=None)
+
+        # 4. Top Intent Metrics
+        top_intent = df['intent'].mode()[0] if not df['intent'].empty else "N/A"
+        total_queries = len(df)
+        
+        return fig_intents, fig_sentiment, fig_dist, df['sentiment'].mean(), {"total": total_queries, "top": top_intent}
     finally: db.close()
