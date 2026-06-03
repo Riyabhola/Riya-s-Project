@@ -19,6 +19,6 @@
 - `docs/`: Architecture diagrams and API documentation.
 
 ## Guidelines
-- All interactions must be logged to `student_interactions.db` (local) or Cloud DB (PostgreSQL).
+- All interactions must be logged to Cloud DB (Aiven PostgreSQL). Local SQLite persistence is deprecated.
 - Use modular functions for LPU-specific policy retrieval.
 - Ensure 75% attendance rule and LPUNEST scholarship logic are strictly followed.

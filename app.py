@@ -13,12 +13,12 @@ warnings.filterwarnings("ignore", message="Accessing .* from .* Returning .* ins
 
 from logic.chatbot import handle_query
 from logic.analytics import get_analytics_data
-from logic.database import init_sqlite, init_chroma
+from logic.database import init_online_db, init_chroma
 from logic.puter_bridge import puter_ai_chat
 import uuid
 
-# Initialize databases on startup
-init_sqlite()
+# Initialize online databases on startup
+init_online_db()
 init_chroma()
 
 st.set_page_config(page_title="LPU Academic Advisor", layout="wide")
@@ -28,8 +28,6 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
-if "pending_prompt" not in st.session_state:
-    st.session_state.pending_prompt = None
 
 def main():
     st.sidebar.title("🦁 LPU Advisor Hub")

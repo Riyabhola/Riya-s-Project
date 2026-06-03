@@ -6,7 +6,6 @@ from putergenai import PuterClient
 
 # --- Puter Configuration (Automated Anonymous Access) ---
 # No credentials required for Puter's seamless guest AI mode.
-# Gemini has been removed as per professional mandate.
 
 LPU_ADVISOR_SYSTEM_PROMPT = """
 You are the "LPU AI Academic Advisor", a professional, supportive, and highly accurate assistant for students at Lovely Professional University (LPU).
@@ -74,18 +73,11 @@ def generate_response_with_llm(query, context, intent, history=""):
 
     return None
 
-def detect_intent(text, user_id):
+# Intent Detection Engine
+def detect_intent(text):
     """
-    Detects intent using Dialogflow if configured, otherwise falls back to mock.
+    Detects LPU-specific intents using the professional mock engine.
     """
-    if os.getenv("DIALOGFLOW_PROJECT_ID"):
-        # Real Dialogflow integration would go here
-        # return detect_intent_dialogflow(text, user_id)
-        pass
-    return detect_intent_mock(text)
-
-# Mock Dialogflow logic
-def detect_intent_mock(text):
     text = text.lower()
     
     # 1. Bot Personality / Small Talk (Priority)
@@ -130,7 +122,7 @@ def get_course_recommendations(query_text=""):
 
 def handle_query(user_id, query_text):
     # 1. Detect Intent
-    intent, parameters = detect_intent(query_text, user_id)
+    intent, parameters = detect_intent(query_text)
     
     # 2. Analyze Sentiment
     sentiment = TextBlob(query_text).sentiment.polarity

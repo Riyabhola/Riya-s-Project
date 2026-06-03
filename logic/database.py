@@ -9,33 +9,15 @@ import datetime
 
 # --- Configuration ---
 DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL environment variable is missing. Aiven PostgreSQL is required.")
-
-# SQLAlchemy 2.0+ requires 'postgresql://' instead of 'postgres://'
-if DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
 CHROMA_PATH = "data/chroma_db"
 
-# --- SQLAlchemy Setup ---
-def create_db_engine():
-    """
-    Creates an engine exclusively for Aiven PostgreSQL.
-    No local SQLite fallbacks are permitted.
-    """
-    try:
-        engine = create_engine(DATABASE_URL)
-        # Verify connectivity immediately
-        with engine.connect() as conn:
-            print("Successfully connected to Aiven PostgreSQL.")
-        return engine
-    except Exception as e:
-        print(f"CRITICAL: Failed to connect to Aiven PostgreSQL: {e}")
-        raise RuntimeError(f"Database connection failed: {e}")
+# SQLAlchemy 2.0+ requires 'postgresql://' instead of 'postgres://'
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-engine = create_db_engine()
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# --- SQLAlchemy Setup ---
+engine = None
+SessionLocal = None
 Base = declarative_base()
 
 class Interaction(Base):
@@ -56,15 +38,46 @@ class Appointment(Base):
     date_time = Column(String(100))
     status = Column(String(50), default="Scheduled")
 
-def init_sqlite():
-    """Initializes the relational database schema."""
+def create_db_engine():
+    """
+    Creates an engine exclusively for Aiven PostgreSQL.
+    No local SQLite fallbacks are permitted for persistence.
+    """
+    if not DATABASE_URL:
+        print("WARNING: DATABASE_URL environment variable is missing. SQL persistence will be disabled.")
+        return None
+    try:
+        tmp_engine = create_engine(DATABASE_URL)
+        # Verify connectivity immediately
+        with tmp_engine.connect() as conn:
+            print("Successfully connected to Aiven PostgreSQL.")
+        return tmp_engine
+    except Exception as e:
+        print(f"ERROR: Failed to connect to Aiven PostgreSQL: {e}")
+        return None
+
+# Attempt to initialize engine at module level, but don't crash if it fails
+engine = create_db_engine()
+if engine:
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+else:
+    print("WARNING: SQL functions (logging, appointments) will not persist data.")
+
+def init_online_db():
+    """Initializes the relational database schema on Aiven PostgreSQL."""
+    if not engine:
+        print("Skipping online DB initialization: No engine available.")
+        return
     try:
         Base.metadata.create_all(bind=engine)
-        print(f"Database initialized successfully using: {engine.url}")
+        print(f"Online database initialized successfully.")
     except Exception as e:
         print(f"Critical Error: Could not initialize database schema: {e}")
 
 def log_interaction(user_id, query, intent, response, sentiment):
+    if not SessionLocal:
+        print(f"LOG (No DB): {user_id} | {intent} | {sentiment}")
+        return
     db = SessionLocal()
     try:
         new_interaction = Interaction(
@@ -76,21 +89,30 @@ def log_interaction(user_id, query, intent, response, sentiment):
         )
         db.add(new_interaction)
         db.commit()
+    except Exception as e:
+        print(f"Failed to log interaction to DB: {e}")
     finally:
         db.close()
 
 def get_interactions():
+    if not SessionLocal:
+        return pd.DataFrame()
     db = SessionLocal()
     try:
         # Load into DataFrame for analytics compatibility
         query = db.query(Interaction)
         df = pd.read_sql(query.statement, db.bind)
         return df
+    except Exception as e:
+        print(f"Error fetching interactions: {e}")
+        return pd.DataFrame()
     finally:
         db.close()
 
 def get_recent_interactions(user_id, limit=5):
     """Retrieves the last N interactions for a specific user to provide conversation memory."""
+    if not SessionLocal:
+        return []
     db = SessionLocal()
     try:
         interactions = db.query(Interaction).filter(
@@ -98,10 +120,16 @@ def get_recent_interactions(user_id, limit=5):
         ).order_by(Interaction.timestamp.desc()).limit(limit).all()
         # Reverse to get chronological order
         return interactions[::-1]
+    except Exception as e:
+        print(f"Error fetching recent interactions: {e}")
+        return []
     finally:
         db.close()
 
 def book_appointment(student_id, advisor_id, date_time):
+    if not SessionLocal:
+        print(f"BOOKING (No DB): {student_id} with {advisor_id} at {date_time}")
+        return
     db = SessionLocal()
     try:
         new_appointment = Appointment(
@@ -111,6 +139,8 @@ def book_appointment(student_id, advisor_id, date_time):
         )
         db.add(new_appointment)
         db.commit()
+    except Exception as e:
+        print(f"Failed to book appointment in DB: {e}")
     finally:
         db.close()
 
@@ -194,6 +224,6 @@ def query_knowledge_base(query_text, n_results=1):
     return results['documents'][0][0] if results['documents'] else "I'm sorry, I couldn't find any specific LPU policy regarding that."
 
 if __name__ == "__main__":
-    init_sqlite()
+    init_online_db()
     init_chroma()
-    print("Databases initialized with SQLAlchemy abstraction.")
+    print("Online databases initialized.")

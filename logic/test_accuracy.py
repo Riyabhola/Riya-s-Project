@@ -1,7 +1,12 @@
 from logic.chatbot import handle_query
+from logic.database import init_online_db, init_chroma
 import pandas as pd
 
 def run_tests():
+    # Ensure online environment is ready
+    init_online_db()
+    init_chroma()
+    
     test_cases = [
         {"query": "What is the LPU attendance policy?", "expected_intent": "query_policy"},
         {"query": "Recommend some Python programming courses at LPU", "expected_intent": "get_course_recommendation"},
