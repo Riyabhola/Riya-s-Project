@@ -88,11 +88,11 @@ def run_standard_tests():
     # 5. Test Puter Bridge Integrity
     print("\n[Test 5] Puter AI Bridge Rendering")
     try:
-        # Mock streamlit.iframe to capture the URI in bare mode
-        with patch("streamlit.iframe", side_effect=lambda url, height: url) as mock_iframe:
+        # Mock streamlit components to capture the HTML in bare mode
+        with patch("streamlit.components.v1.html", side_effect=lambda html, height: html) as mock_html:
             bridge_output = advisor_logic.puter_ai_chat("Test Prompt")
-            if bridge_output is not None and "data:text/html;base64" in str(bridge_output):
-                print("✅ PASSED: Puter AI Bridge generates modern iframe Data URIs.")
+            if bridge_output is not None and "js.puter.com/v2" in str(bridge_output):
+                print("✅ PASSED: Puter AI Bridge generates valid component HTML.")
             else:
                 print(f"❌ FAILED: Puter bridge output invalid. Received: {type(bridge_output)}")
     except Exception as e:
