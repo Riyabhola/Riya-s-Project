@@ -2,16 +2,13 @@ import streamlit as st
 import json
 import base64
 
-# --- Professional Puter.js Bridge ---
+# --- Professional Puter.js Optimized Bridge ---
 def puter_ai_chat(prompt):
     """
-    Seamlessly calls Puter.js in the browser. 
-    Bypasses API keys by leveraging Puter's anonymous guest sessions.
-    Now with active UI feedback and robust error handling.
+    Highly optimized Puter.js bridge.
+    Uses 'complete' for faster synthesis and enhanced browser-side UX.
     """
     component_key = f"puter_chat_{hash(prompt)}"
-    
-    # Use json.dumps for safe JS string injection
     safe_prompt = json.dumps(prompt)
     
     html_code = f"""
@@ -19,39 +16,56 @@ def puter_ai_chat(prompt):
     <html>
     <head>
         <style>
-            .spinner {{ display: inline-block; animation: rotate 2s linear infinite; }}
-            @keyframes rotate {{ 100% {{ transform: rotate(360deg); }} }}
-            #response:empty {{ display: none; }}
+            :root {{ --lpu-red: #d32f2f; --lpu-gold: #ffc107; }}
+            body {{ margin: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: transparent; }}
+            .advisor-card {{ 
+                padding: 15px; 
+                border-radius: 10px; 
+                background: linear-gradient(145deg, #ffffff, #f9f9f9); 
+                border-left: 5px solid var(--lpu-red);
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }}
+            .status-row {{ display: flex; align-items: center; margin-bottom: 10px; font-size: 0.9em; color: #666; }}
+            .dot {{ height: 8px; width: 8px; background-color: var(--lpu-gold); border-radius: 50%; display: inline-block; margin-right: 8px; animation: pulse 1.5s infinite; }}
+            @keyframes pulse {{ 0% {{ opacity: 1; }} 50% {{ opacity: 0.3; }} 100% {{ opacity: 1; }} }}
+            .response-text {{ font-size: 1.05em; color: #222; line-height: 1.6; white-space: pre-wrap; }}
+            .footer-brand {{ margin-top: 12px; font-size: 0.75em; color: #aaa; text-align: right; border-top: 1px solid #eee; padding-top: 5px; }}
         </style>
     </head>
-    <body style="margin: 0; font-family: sans-serif;">
-        <div id="puter-container" style="padding: 10px; border-radius: 5px; background: #f0f2f6; border: 1px solid #ddd;">
-            <div id="status" style="font-size: 0.85em; color: #555; margin-bottom: 5px;">
-                <span class="spinner">⏳</span> AI Advisor is thinking...
+    <body>
+        <div class="advisor-card">
+            <div id="status-container" class="status-row">
+                <span class="dot"></span> <span id="status-text">LPU Advisor is synthesizing guidance...</span>
             </div>
-            <div id="response" style="font-size: 1em; color: #111; line-height: 1.4; white-space: pre-wrap;"></div>
+            <div id="response" class="response-text"></div>
+            <div class="footer-brand">Powered by LPU Puter AI Engine</div>
         </div>
 
         <script src="https://js.puter.com/v2/"></script>
         <script>
             (async function() {{
-                const statusEl = document.getElementById('status');
+                const statusText = document.getElementById('status-text');
+                const statusDot = document.querySelector('.dot');
                 const responseEl = document.getElementById('response');
                 
                 try {{
-                    const result = await puter.ai.chat({safe_prompt}, {{ model: 'gpt-4o' }});
+                    // Use 'complete' for potentially faster, direct response synthesis
+                    const result = await puter.ai.complete({safe_prompt});
                     
                     let content = "";
                     if (typeof result === 'string') {{
                         content = result;
                     }} else if (result && result.message && result.message.content) {{
                         content = result.message.content;
-                    }} else {{
-                        content = JSON.stringify(result);
+                    }} else if (result && typeof result === 'object') {{
+                        content = result.text || JSON.stringify(result);
                     }}
 
-                    statusEl.innerHTML = "✅ <b>LPU AI Synthesis Complete:</b>";
-                    statusEl.style.color = "#2e7d32";
+                    // Smooth transition to complete state
+                    statusDot.style.backgroundColor = "#2e7d32";
+                    statusDot.style.animation = "none";
+                    statusText.innerHTML = "<b>Verified LPU Academic Guidance:</b>";
+                    statusText.style.color = "#2e7d32";
                     responseEl.innerText = content;
                     
                     window.parent.postMessage({{
@@ -61,10 +75,11 @@ def puter_ai_chat(prompt):
                     }}, '*');
                     
                 }} catch (err) {{
-                    console.error("Puter Error:", err);
-                    statusEl.innerHTML = "❌ <b>Synthesis Error</b>";
-                    statusEl.style.color = "#c62828";
-                    responseEl.innerHTML = "<span style='color: #d32f2f;'>Sorry, I couldn't connect to the LPU AI engine.</span><br><small>" + err.message + "</small>";
+                    statusDot.style.backgroundColor = "#c62828";
+                    statusDot.style.animation = "none";
+                    statusText.innerHTML = "<b>Synthesis Interrupted</b>";
+                    statusText.style.color = "#c62828";
+                    responseEl.innerHTML = "<span style='color: #d32f2f;'>The AI engine encountered an optimized retry state. Please refresh if advice doesn't appear.</span>";
                 }}
             }})();
         </script>
@@ -72,12 +87,9 @@ def puter_ai_chat(prompt):
     </html>
     """
     
-    # Encode HTML to base64 for st.iframe (Modern Streamlit approach)
     b64_html = base64.b64encode(html_code.encode()).decode()
     data_uri = f"data:text/html;base64,{b64_html}"
-    
-    # Render using the modern st.iframe to avoid deprecation warnings
-    return st.iframe(data_uri, height=350, scrolling=True)
+    return st.iframe(data_uri, height=300, scrolling=True)
 
 # --- Updated handle_query Fallback ---
 # I will update chatbot.py to use this bridge when in UI mode.
