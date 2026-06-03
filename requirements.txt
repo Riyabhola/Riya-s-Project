@@ -1,12 +1,8 @@
 streamlit
-chromadb
-protobuf
+protobuf>=4.21.0
 textblob
 pandas
 plotly
-sentence-transformers
-torch
-torchvision
 SQLAlchemy
 psycopg2-binary
 putergenai

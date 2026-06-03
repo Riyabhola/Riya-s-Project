@@ -1,11 +1,10 @@
 from logic.chatbot import handle_query
-from logic.database import init_online_db, init_chroma
+from logic.database import init_online_db
 import random
 
 def generate_sample_data():
     # Ensure online database is initialized
     init_online_db()
-    init_chroma()
     
     user_ids = [f"student_{i}" for i in range(1, 11)]
     queries = [

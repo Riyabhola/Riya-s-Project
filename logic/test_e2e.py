@@ -1,9 +1,12 @@
-import sys
 import os
+# Force pure Python implementation of protobuf for compatibility
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
+import sys
 import uuid
 import pandas as pd
 from logic.chatbot import handle_query
-from logic.database import init_online_db, init_chroma, get_interactions
+from logic.database import init_online_db, get_interactions
 from logic.analytics import get_analytics_data
 
 def test_e2e_flow():
@@ -12,7 +15,6 @@ def test_e2e_flow():
     # 1. Initialize Online Databases
     print("\n[Step 1] Initializing Online Databases...")
     init_online_db()
-    init_chroma()
     print("✅ Online databases ready.")
 
     # 2. Simulate User Journey

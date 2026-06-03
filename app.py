@@ -13,13 +13,12 @@ warnings.filterwarnings("ignore", message="Accessing .* from .* Returning .* ins
 
 from logic.chatbot import handle_query
 from logic.analytics import get_analytics_data
-from logic.database import init_online_db, init_chroma
+from logic.database import init_online_db
 from logic.puter_bridge import puter_ai_chat
 import uuid
 
-# Initialize online databases on startup
+# Initialize online database on startup
 init_online_db()
-init_chroma()
 
 st.set_page_config(page_title="LPU Academic Advisor", layout="wide")
 

@@ -1,11 +1,14 @@
+import os
+# Force pure Python implementation of protobuf for compatibility
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 from logic.chatbot import handle_query
-from logic.database import init_online_db, init_chroma
+from logic.database import init_online_db
 import pandas as pd
 
 def run_tests():
     # Ensure online environment is ready
     init_online_db()
-    init_chroma()
     
     test_cases = [
         {"query": "What is the LPU attendance policy?", "expected_intent": "query_policy"},
