@@ -193,16 +193,36 @@ def query_courses(query_text, n_results=3):
         db.close()
 
 def query_knowledge_base(query_text, n_results=1):
-    """Searches policies in Aiven PostgreSQL using basic keyword matching."""
+    """Searches policies in Aiven PostgreSQL using weighted keyword matching and stop-word filtering."""
     db = SessionLocal()
     try:
-        words = query_text.lower().split()
+        # Stop-word filtering
+        stop_words = {"tell", "me", "related", "to", "policy", "rules", "what", "is", "the", "how", "does", "work"}
+        words = [w.lower() for w in query_text.lower().split() if w.lower() not in stop_words and len(w) > 2]
+        
+        if not words:
+            return "I'm sorry, I couldn't identify the specific LPU policy you're asking about. Please provide more details."
+
         results = db.query(Policy).all()
         best_match = None
         max_score = -1
         
         for p in results:
-            score = sum(2 for w in words if w in p.title.lower()) + sum(1 for w in words if w in p.content.lower())
+            score = 0
+            title_lower = p.title.lower()
+            content_lower = p.content.lower()
+            
+            for w in words:
+                # Weighting: Exact matches in title are highly significant
+                if w in title_lower:
+                    score += 10
+                # Exact matches in content are significant
+                if w in content_lower:
+                    score += 2
+                # Partial matches
+                if w[:-1] in title_lower and len(w) > 4:
+                    score += 2
+
             if score > max_score:
                 max_score = score
                 best_match = p

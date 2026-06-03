@@ -12,37 +12,34 @@ You are the "LPU AI Academic Advisor", a professional, supportive, and highly ac
 Your goal is to provide precise academic guidance based ONLY on the provided context and LPU's official policies.
 
 Core Guidelines:
-1. Tone: Professional yet empathetic and encouraging.
+1. Tone: Professional, authoritative, and helpful.
 2. Accuracy: Strictly follow LPU policies (e.g., 75% attendance rule, CGPA requirements).
-3. Clarity: Use bullet points for complex information.
-4. Scope: If the user asks something outside the provided context or general LPU knowledge, politely redirect them to the LPU UMS portal or a faculty advisor.
-5. Identity: Always identify as the LPU AI Academic Advisor.
+3. Clarity: Use structured bullet points and bold text for key terms.
+4. Scope: If the user asks something outside the provided context, inform them that you are limited to academic advising for LPU and suggest contacting the university directly or checking the UMS portal.
+5. Identity: Never break character. You are a dedicated LPU academic resource.
 
-Context will be provided for specific queries. You must also consider the CONVERSATION HISTORY to maintain continuity and answer follow-up questions accurately.
+Context will be provided for specific queries. You must prioritize the KNOWLEDGE CONTEXT above all else.
 """
 
 async def _call_puter_ai_automated(query, context, history=""):
     """
     Calls Puter AI. Uses PUTER_TOKEN if available.
-    If no token is present, returns None to trigger the seamless 
-    frontend Puter.js bridge (which supports anonymous guest sessions).
     """
     puter_token = os.getenv("PUTER_TOKEN")
     if not puter_token:
-        # Avoid 'No token available' noise in logs; let frontend handle it
         return None
     
     try:
         client = PuterClient(token=puter_token)
         async with client as c:
-            prompt = f"{LPU_ADVISOR_SYSTEM_PROMPT}\n\n"
+            # Crafting a more precise prompt for the LLM
+            prompt = f"SYSTEM INSTRUCTION: {LPU_ADVISOR_SYSTEM_PROMPT}\n\n"
             if history:
-                prompt += f"CONVERSATION HISTORY:\n{history}\n\n"
+                prompt += f"CONVERSATION HISTORY (for context only):\n{history}\n\n"
             if context:
-                prompt += f"KNOWLEDGE CONTEXT:\n{context}\n\n"
-            prompt += f"USER QUERY: {query}\nADVISOR RESPONSE:"
+                prompt += f"OFFICIAL LPU KNOWLEDGE CONTEXT (PRIORITY):\n{context}\n\n"
+            prompt += f"STUDENT QUERY: {query}\n\nLPU ADVISOR RESPONSE:"
             
-            # Using gpt-4o-mini as it's widely available
             result = await c.ai_chat(prompt, options={"model": "gpt-4o-mini"})
             
             if isinstance(result, dict) and "response" in result:
@@ -61,7 +58,6 @@ def generate_response_with_llm(query, context, intent, history=""):
     """
     Generates a synthesized response exclusively using Puter AI.
     """
-    # Puter is now the sole AI provider for the project.
     try:
         puter_response = asyncio.run(_call_puter_ai_automated(query, context, history))
         if puter_response:
@@ -74,39 +70,35 @@ def generate_response_with_llm(query, context, intent, history=""):
 # Intent Detection Engine
 def detect_intent(text):
     """
-    Detects LPU-specific intents using the professional mock engine.
+    Detects LPU-specific intents with high precision keywords.
     """
     text = text.lower()
     
-    # 1. Bot Personality / Small Talk (Priority)
-    if any(k in text for k in ["your interest", "who are you", "what do you do", "about yourself", "how are you", "who is your creator"]):
-        return "small_talk", {}
+    # 1. Identity / Small Talk
+    if any(k in text for k in ["your name", "who are you", "what are you", "yourself", "how are you", "your creator"]):
+        return "identity", {}
         
     # 2. Course Recommendations
-    if any(k in text for k in ["recommend", "course", "suggest", "take classes", "which subject", "learn about", "study"]):
-        return "get_course_recommendation", {}
-    
-    if "interest" in text and "your" not in text:
+    if any(k in text for k in ["recommend", "course", "suggest", "take classes", "which subject", "study fashion", "cse courses", "related to"]):
         return "get_course_recommendation", {}
 
-    # 3. Policy Queries (Expanded)
-    elif any(k in text for k in ["policy", "rule", "requirement", "grading", "scale", "probation", "credit", "hours", "graduate", "attendance", "scholarship", "ums", "placement", "exam", "test", "backlog", "re-appear", "fee", "cost", "mca", "btech", "admission"]):
+    # 3. Policy Queries
+    if any(k in text for k in ["policy", "rule", "requirement", "grading", "scale", "probation", "credit", "attendance", "scholarship", "fee", "admission"]):
         return "query_policy", {}
     
     # 4. Appointments
-    elif any(k in text for k in ["appointment", "schedule", "book", "meeting", "advisor", "see someone", "talk to faculty"]):
+    if any(k in text for k in ["appointment", "schedule", "book", "meeting", "advisor", "see faculty"]):
         return "book_appointment", {"date": "tomorrow at 10am"}
     
     # 5. Greetings
-    elif any(k in text for k in ["hi", "hello", "hey", "greetings", "good morning", "good afternoon"]):
+    if any(k in text for k in ["hi", "hello", "hey", "greetings"]):
         return "greeting", {}
     
-    else:
-        return "general_inquiry", {}
+    return "general_inquiry", {}
 
 def get_course_recommendations(query_text=""):
     """
-    Uses semantic search (ChromaDB) to find relevant LPU courses.
+    Uses semantic search (Aiven) to find relevant LPU courses.
     """
     recommendations = query_courses(query_text)
     
@@ -129,7 +121,7 @@ def handle_query(user_id, query_text):
     recent_interactions = get_recent_interactions(user_id, limit=3)
     history_context = ""
     for interaction in recent_interactions:
-        history_context += f"User: {interaction.query}\nAdvisor: {interaction.response}\n"
+        history_context += f"Student: {interaction.query}\nAdvisor: {interaction.response}\n"
     
     context = None
     response = None
@@ -140,30 +132,27 @@ def handle_query(user_id, query_text):
     elif intent == "get_course_recommendation":
         recs = query_courses(query_text)
         if recs:
-            context = "\n".join([f"Course: {c['name']}, ID: {c['course_id']}, Credits: {c['credits']}, Description: {c['description']}" for c in recs])
+            context = "RELEVANT LPU COURSES:\n" + "\n".join([f"- {c['course_id']}: {c['name']} ({c['credits']} credits). {c['description']}" for c in recs])
     
-    # 5. Generate Response with LLM (passing history)
+    # 5. Generate Response with LLM
     response = generate_response_with_llm(query_text, context, intent, history_context)
     
-    # 6. Fallback Logic (if LLM is unavailable or fails)
+    # 6. Fallback Logic (Precision fallback)
     if not response:
-        if intent == "small_talk":
-            response = "As an AI Academic Advisor for LPU, my interests lie in helping you succeed! I'm passionate about university policies, course planning, and making your academic journey at Lovely Professional University smoother."
+        if intent == "identity":
+            response = "I am the LPU AI Academic Advisor, a specialized assistant designed to help students of Lovely Professional University navigate their academic journey, understand university policies, and discover relevant courses."
         elif intent == "query_policy":
-            if context and "I'm sorry, I couldn't find" not in context:
-                response = context
-            else:
-                response = "SEARCH_FAILURE: Could not find specific LPU policy details."
+            response = context if context else "I'm sorry, I couldn't find a specific LPU policy regarding your query in our online database. Please check the LPU UMS portal for the most up-to-date information."
         elif intent == "get_course_recommendation":
             response = get_course_recommendations(query_text)
         elif intent == "book_appointment":
             date_time = parameters.get("date", "Next available slot")
             book_appointment(user_id, "LPU Faculty Advisor", date_time)
-            response = f"I've scheduled an appointment for you with an LPU Faculty Advisor on {date_time}. Please check your LPU UMS email for the confirmation link."
+            response = f"I've scheduled an appointment for you with an LPU Faculty Advisor for {date_time}. Please check your UMS registered email for confirmation."
         elif intent == "greeting":
-            response = "Hello! I'm your LPU AI Academic Advisor. How can I assist you today?"
+            response = "Welcome! I'm your LPU Academic Advisor. How can I help you with your university journey today?"
         else:
-            response = "GENERAL_QUERY_FALLBACK: Please specify your LPU academic inquiry."
+            response = "I'm here to assist with LPU academic matters. Could you please specify your query regarding LPU courses, policies, or advisor appointments?"
 
     # 7. Log Interaction (Handle DB failures gracefully)
     try:

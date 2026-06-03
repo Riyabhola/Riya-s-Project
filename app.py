@@ -67,7 +67,7 @@ def show_chat():
     st.title("🎓 LPU Academic Advisor")
     st.markdown("Welcome to the LPU AI Support. Ask about course recommendations, LPU academic policies, or book an appointment.")
 
-    # Display chat messages
+    # Display chat messages from history
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
@@ -76,41 +76,50 @@ def show_chat():
 
     # User Input
     if prompt := st.chat_input("How can I help you today?"):
+        # 1. Immediately display user message
         st.session_state.messages.append({"role": "user", "content": prompt})
-        st.rerun()
+        with st.chat_message("user"):
+            st.markdown(prompt)
 
-    # Handle the latest message if it's from the user
-    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
-        user_prompt = st.session_state.messages[-1]["content"]
+        # 2. Process Assistant Response with professional UI feedback
         with st.chat_message("assistant"):
-            # 1. Get initial response
-            response, intent, sentiment = handle_query(st.session_state.user_id, user_prompt)
-            
-            use_puter = False
-            puter_prompt = ""
-            
-            # 2. Seamless LLM Synthesis (if backend fails/not configured)
-            if "FALLBACK" in response or "SEARCH_FAILURE" in response or len(response) < 50:
-                 st.info("Synthesizing professional LPU advice via Puter AI...")
-                 use_puter = True
-                 puter_prompt = f"As an LPU Academic Advisor, answer based on university context: {user_prompt}"
-                 puter_ai_chat(puter_prompt)
-            
-            st.markdown(response)
-            
-            # Optional feedback in UI
-            if sentiment > 0.5:
-                st.caption("I'm glad you're feeling positive! 😊")
-            elif sentiment < -0.5:
-                st.caption("I'm sorry you're feeling frustrated. I'm here to help. 😔")
+            with st.status("🦁 LPU Advisor is working...", expanded=True) as status:
+                st.write("🔍 Analyzing your inquiry...")
+                # Get response
+                response, intent, sentiment = handle_query(st.session_state.user_id, prompt)
+                
+                st.write(f"📖 Searching LPU {intent.replace('_', ' ')} knowledge base...")
+                
+                use_puter = False
+                puter_prompt = ""
+                
+                # Check if we need Puter synthesis
+                if "FALLBACK" in response or "SEARCH_FAILURE" in response or len(response) < 50:
+                    st.write("✨ Synthesizing professional LPU advice via Puter AI...")
+                    use_puter = True
+                    puter_prompt = f"As an LPU Academic Advisor, answer based on university context: {prompt}"
+                    status.update(label="✅ Synthesis Complete", state="complete", expanded=False)
+                    # Puter bridge renders below the status
+                    puter_ai_chat(puter_prompt)
+                else:
+                    status.update(label="✅ Response Found", state="complete", expanded=False)
 
-        # Save assistant response to history
+                st.markdown(response)
+                
+                if sentiment > 0.5:
+                    st.caption("I'm glad you're feeling positive! 😊")
+                elif sentiment < -0.5:
+                    st.caption("I'm here to help you through this. 😔")
+
+        # 3. Save assistant response to history
         st.session_state.messages.append({
             "role": "assistant", 
             "content": response, 
             "use_puter": use_puter, 
             "puter_prompt": puter_prompt
         })
+        
+        # Avoid full page rerun here to maintain focus
 
 def show_dashboard():
     st.title("📊 Student Interaction Analytics")
