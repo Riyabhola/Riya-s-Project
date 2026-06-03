@@ -1,44 +1,31 @@
-# AI-Powered Academic Advising Chatbot Design
+# LPU AI-Powered Academic Advising Chatbot Design
 
 ## Overview
-An academic advising chatbot built with Streamlit, leveraging Dialogflow for intent recognition and ChromaDB for RAG-based knowledge retrieval.
+An academic advising chatbot specifically tailored for **Lovely Professional University (LPU)**, leveraging Dialogflow for intent recognition and ChromaDB for RAG-based knowledge retrieval of LPU policies.
 
 ## Architecture
-- **Frontend:** Streamlit (Chat UI + Analytics Dashboard)
-- **NLP Engine:** Google Dialogflow (Intent handling)
-- **Knowledge Base:** ChromaDB (Vector database for academic policies)
-- **Data Persistence:** SQLite (Student records, interaction logs, appointments)
-- **Sentiment Analysis:** TextBlob / NLTK
+- **Frontend:** Streamlit (LPU branded Chat UI + Student Insights Dashboard)
+- **NLP Engine:** Google Dialogflow / Keyword-based Mock (LPU intent handling)
+- **Knowledge Base:** ChromaDB (Vector database for LPU academic policies)
+- **Data Persistence:** SQLAlchemy (Supports SQLite local and PostgreSQL cloud for LPU logs)
+- **Sentiment Analysis:** TextBlob
 
 ## Key Components
 
-### 1. Chatbot Interface
-- Multi-turn conversation logic.
+### 1. LPU Chatbot Interface
+- Multi-turn conversation logic with university-specific tone.
 - Intent mapping:
-    - `get_course_recommendation`
-    - `query_policy`
-    - `book_appointment`
+    - `get_course_recommendation` (LPU specific)
+    - `query_policy` (Attendance, Scholarships, UMS)
+    - `book_appointment` (LPU Faculty Advisors)
     - `general_inquiry`
 
-### 2. Knowledge Base (RAG)
-- Academic policies (grading, credits, graduation requirements) stored as embeddings in ChromaDB.
-- Semantic search to retrieve relevant policy text for student queries.
+### 2. LPU Knowledge Base (RAG)
+- LPU academic policies (75% attendance rule, LPUNEST scholarships, UMS registration) stored in ChromaDB.
+- Semantic search to provide authoritative LPU-specific answers.
 
 ### 3. Recommendation Engine
-- Logic to suggest courses based on student profile (major, year, interests).
+- Logic to suggest LPU courses (CSE, Management, Biotechnology) based on student interests.
 
-### 4. Appointment System
-- Integration with a mock booking service, storing data in SQLite.
-
-### 5. Analytics Dashboard
-- Visualization of student sentiment over time.
-- Most frequent topics/intents.
-- Scheduling trends.
-
-## Data Flow
-1. User enters query in Streamlit.
-2. Query sent to Dialogflow for intent detection.
-3. If intent is `query_policy`, query ChromaDB for context.
-4. Response generated based on Dialogflow/RAG logic.
-5. Interaction logged to SQLite for analytics.
-6. Display response in Streamlit.
+### 4. Professional Persistence Layer
+- Hybrid database model (SQLAlchemy) allowing local development and cloud production deployments (e.g., Aiven, Supabase).

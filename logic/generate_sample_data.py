@@ -5,21 +5,21 @@ import time
 def generate_sample_data():
     user_ids = [f"student_{i}" for i in range(1, 11)]
     queries = [
-        "Hi there",
-        "What is the grading scale?",
-        "I need a recommendation for a computer science course",
-        "Can I see an advisor tomorrow?",
-        "Tell me about academic probation",
-        "I'm feeling very frustrated with my grades",
-        "Thank you for the help!",
-        "What are the credit requirements for graduation?",
-        "Suggest some introductory math classes",
-        "How do I declare a major?",
-        "I want to book a meeting",
-        "Help me plan my semester",
-        "What happens if I get an incomplete grade?",
-        "Recommend some biology courses",
-        "This is great, thank you!"
+        "Hello!",
+        "What is the LPU attendance policy?",
+        "I need a recommendation for a CSE course",
+        "Can I see an LPU faculty advisor tomorrow?",
+        "Tell me about academic probation at LPU",
+        "I'm feeling very frustrated with my marks",
+        "Thank you for the guidance, LPU Advisor!",
+        "What are the credit requirements for graduation at LPU?",
+        "Suggest some introductory Python classes",
+        "How do I use the UMS portal for registration?",
+        "I want to book an LPU advisor meeting",
+        "Help me plan my LPU semester",
+        "What is the LPUNEST scholarship criteria?",
+        "Recommend some management courses at LPU",
+        "This LPU assistant is great, thank you!"
     ]
 
     print("Generating sample interactions...")

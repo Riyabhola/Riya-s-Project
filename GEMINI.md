@@ -1,22 +1,23 @@
-# Project: Academic Advising Chatbot
+# Project: LPU Academic Advising Chatbot
 
 ## Tech Stack
 - **Frontend/App:** Streamlit
-- **NLP:** Dialogflow (Python SDK)
-- **Vector DB:** ChromaDB
+- **NLP:** Dialogflow (Mocked/Python SDK)
+- **Vector DB:** ChromaDB (RAG for LPU Policies)
+- **Database:** SQLAlchemy (SQLite/PostgreSQL for interaction logs)
 - **Analytics:** Pandas/Plotly
 - **Sentiment:** TextBlob
 
 ## File Structure
-- `app.py`: Main Streamlit application.
+- `app.py`: Main LPU branded Streamlit application.
 - `logic/`: Backend logic.
-    - `chatbot.py`: Dialogflow and RAG orchestration.
-    - `database.py`: SQLite and ChromaDB management.
+    - `chatbot.py`: LPU intent detection and RAG orchestration.
+    - `database.py`: SQLAlchemy and ChromaDB management.
     - `analytics.py`: Sentiment and interaction processing.
-- `data/`: Sample datasets (CSV/JSON).
+- `data/`: LPU specific datasets (CSV/JSON).
 - `docs/`: Architecture diagrams and API documentation.
 
 ## Guidelines
-- Use modular functions in `logic/`.
-- Ensure mock support for Dialogflow to allow testing without live credentials.
-- All interactions must be logged to `data/student_interactions.db`.
+- All interactions must be logged to `student_interactions.db` (local) or Cloud DB (PostgreSQL).
+- Use modular functions for LPU-specific policy retrieval.
+- Ensure 75% attendance rule and LPUNEST scholarship logic are strictly followed.
