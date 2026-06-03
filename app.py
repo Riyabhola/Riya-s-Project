@@ -46,12 +46,11 @@ def main():
             st.session_state.messages.append({"role": "user", "content": ex})
             response, intent, sentiment = handle_query(st.session_state.user_id, ex)
             
-            # If fallback triggered, try Puter synthesis
+            # If fallback triggered, add to messages and skip immediate rerun to allow Puter to render
             if "FALLBACK" in response or "SEARCH_FAILURE" in response:
-                 st.info("Synthesizing professional LPU advice via Puter AI...")
-                 puter_ai_chat(f"As an LPU Academic Advisor, answer: {ex}")
-            
-            st.session_state.messages.append({"role": "assistant", "content": response})
+                 st.session_state.messages.append({"role": "assistant", "content": response, "use_puter": True, "puter_prompt": f"As an LPU Academic Advisor, answer: {ex}"})
+            else:
+                 st.session_state.messages.append({"role": "assistant", "content": response})
             st.rerun()
 
     if page == "💬 LPU Chatbot":
@@ -67,21 +66,30 @@ def show_chat():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+            if message.get("use_puter"):
+                puter_ai_chat(message.get("puter_prompt", ""))
 
     # User Input
     if prompt := st.chat_input("How can I help you today?"):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"):
-            st.markdown(prompt)
+        st.rerun()
 
+    # Handle the latest message if it's from the user
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+        user_prompt = st.session_state.messages[-1]["content"]
         with st.chat_message("assistant"):
             # 1. Get initial response
-            response, intent, sentiment = handle_query(st.session_state.user_id, prompt)
+            response, intent, sentiment = handle_query(st.session_state.user_id, user_prompt)
+            
+            use_puter = False
+            puter_prompt = ""
             
             # 2. Seamless LLM Synthesis (if backend fails/not configured)
             if "FALLBACK" in response or "SEARCH_FAILURE" in response or len(response) < 50:
                  st.info("Synthesizing professional LPU advice via Puter AI...")
-                 puter_ai_chat(f"As an LPU Academic Advisor, answer based on university context: {prompt}")
+                 use_puter = True
+                 puter_prompt = f"As an LPU Academic Advisor, answer based on university context: {user_prompt}"
+                 puter_ai_chat(puter_prompt)
             
             st.markdown(response)
             
@@ -91,7 +99,13 @@ def show_chat():
             elif sentiment < -0.5:
                 st.caption("I'm sorry you're feeling frustrated. I'm here to help. 😔")
 
-        st.session_state.messages.append({"role": "assistant", "content": response})
+        # Save assistant response to history
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": response, 
+            "use_puter": use_puter, 
+            "puter_prompt": puter_prompt
+        })
 
 def show_dashboard():
     st.title("📊 Student Interaction Analytics")

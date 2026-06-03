@@ -34,15 +34,19 @@ Context will be provided for specific queries. You must also consider the CONVER
 
 async def _call_puter_ai_automated(query, context, history=""):
     """
-    DEPRECATED in favor of frontend Puter.js Bridge for true anonymous access.
-    Kept as an optional backend hook if PUTER_TOKEN is provided.
+    Calls Puter AI. Uses PUTER_TOKEN if available, otherwise attempts 
+    anonymous guest access (supported by putergenai SDK).
     """
     puter_token = os.getenv("PUTER_TOKEN")
-    if not puter_token:
-        return None # Gracefully skip backend Puter call if no token
-        
+    
     try:
-        async with PuterClient(token=puter_token) as client:
+        # If no token, initialize without the token argument for guest access
+        if puter_token:
+            client = PuterClient(token=puter_token)
+        else:
+            client = PuterClient()
+
+        async with client as c:
             prompt = f"{LPU_ADVISOR_SYSTEM_PROMPT}\n\n"
             if history:
                 prompt += f"CONVERSATION HISTORY:\n{history}\n\n"
@@ -50,20 +54,27 @@ async def _call_puter_ai_automated(query, context, history=""):
                 prompt += f"KNOWLEDGE CONTEXT:\n{context}\n\n"
             prompt += f"USER QUERY: {query}\nADVISOR RESPONSE:"
             
-            result = await client.ai_chat(prompt, options={"model": "gpt-4o"})
-            if "response" in result and "result" in result["response"]:
-                return result["response"]["result"]["message"]["content"].strip()
+            # Using gpt-4o-mini as it's widely available for guest access
+            result = await c.ai_chat(prompt, options={"model": "gpt-4o-mini"})
+            
+            if isinstance(result, dict) and "response" in result:
+                res_obj = result["response"]
+                if "result" in res_obj and "message" in res_obj["result"]:
+                    return res_obj["result"]["message"]["content"].strip()
+            elif isinstance(result, str):
+                return result
+            
             return None
     except Exception as e:
-        # Suppress authentication errors in production
+        # Log error but don't crash; let other fallbacks take over
+        print(f"Puter Backend (Guest Mode) Error: {e}")
         return None
 
 def generate_response_with_llm(query, context, intent, history=""):
     """
-    Generates a synthesized response using Gemini or Backend Puter (if token available).
-    The main 'Seamless' bypass is now handled via the Puter.js Bridge in app.py.
+    Generates a synthesized response using Gemini or Puter (Anonymous/Token).
     """
-    # 1. Primary Backend: Gemini (If key is manually provided)
+    # 1. Primary Backend: Gemini (If key is provided)
     if model:
         prompt = f"{LPU_ADVISOR_SYSTEM_PROMPT}\n\n"
         if history:
@@ -75,14 +86,15 @@ def generate_response_with_llm(query, context, intent, history=""):
             gemini_response = model.generate_content(prompt)
             return gemini_response.text.strip()
         except Exception as e:
-            pass
+            print(f"Gemini Error: {e}")
 
-    # 2. Secondary Backend: Puter (Only if PUTER_TOKEN is present)
-    if os.getenv("PUTER_TOKEN"):
-        try:
-            return asyncio.run(_call_puter_ai_automated(query, context, history))
-        except Exception as e:
-            pass
+    # 2. Secondary Backend: Puter (Now supports anonymous fallback)
+    try:
+        puter_response = asyncio.run(_call_puter_ai_automated(query, context, history))
+        if puter_response:
+            return puter_response
+    except Exception as e:
+        print(f"Puter Execution Error: {e}")
 
     return None
 
