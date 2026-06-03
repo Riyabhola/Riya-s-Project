@@ -3,6 +3,14 @@ import os
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 import streamlit as st
+import logging
+import warnings
+
+# Suppress verbose logs and warnings
+logging.getLogger("transformers").setLevel(logging.ERROR)
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", message="Accessing .* from .* Returning .* instead.")
+
 from logic.chatbot import handle_query
 from logic.analytics import get_analytics_data
 from logic.database import init_sqlite, init_chroma

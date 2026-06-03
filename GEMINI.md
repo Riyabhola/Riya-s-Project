@@ -2,9 +2,10 @@
 
 ## Tech Stack
 - **Frontend/App:** Streamlit
-- **NLP:** Dialogflow (Mocked/Python SDK)
+- **NLP:** Keyword-based Mock + LLM Synthesis
+- **LLM SDK:** google-genai (Gemini 1.5 Flash)
 - **Vector DB:** ChromaDB (RAG for LPU Policies)
-- **Database:** SQLAlchemy (SQLite/PostgreSQL for interaction logs)
+- **Database:** SQLAlchemy (Aiven PostgreSQL / Local SQLite)
 - **Analytics:** Pandas/Plotly
 - **Sentiment:** TextBlob
 
