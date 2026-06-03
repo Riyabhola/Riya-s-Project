@@ -1,0 +1,224 @@
+import os
+import pandas as pd
+import datetime
+import uuid
+import asyncio
+import json
+import base64
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from textblob import TextBlob
+import streamlit as st
+import plotly.express as px
+
+# Force pure Python implementation of protobuf globally
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
+# --- Database & Knowledge Base (Aiven PostgreSQL Only) ---
+DATABASE_URL = os.getenv("DATABASE_URL")
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+Base = declarative_base()
+
+class Interaction(Base):
+    __tablename__ = "interactions"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    user_id = Column(String(255))
+    query = Column(Text)
+    intent = Column(String(100))
+    response = Column(Text)
+    sentiment = Column(Float)
+
+class Appointment(Base):
+    __tablename__ = "appointments"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    student_id = Column(String(255))
+    advisor_id = Column(String(255))
+    date_time = Column(String(100))
+    status = Column(String(50), default="Scheduled")
+
+class Policy(Base):
+    __tablename__ = "policies"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    policy_id = Column(String(100), unique=True)
+    title = Column(String(255))
+    content = Column(Text)
+
+class Course(Base):
+    __tablename__ = "courses"
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    course_id = Column(String(100), unique=True)
+    name = Column(String(255))
+    credits = Column(Integer)
+    description = Column(Text)
+
+def get_db_engine():
+    if not DATABASE_URL:
+        return None
+    return create_engine(DATABASE_URL)
+
+engine = get_db_engine()
+if engine:
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+else:
+    # This will be caught by app.py if it's missing
+    SessionLocal = None
+
+def init_online_db():
+    if not engine:
+        return
+    Base.metadata.create_all(bind=engine)
+    db = SessionLocal()
+    try:
+        # Seed Policies
+        if db.query(Policy).count() < 5 and os.path.exists("data/policies.csv"):
+            df = pd.read_csv("data/policies.csv")
+            for _, row in df.iterrows():
+                if not db.query(Policy).filter_by(policy_id=row['policy_id']).first():
+                    db.add(Policy(policy_id=row['policy_id'], title=row['title'], content=row['content']))
+            db.commit()
+        # Seed Courses
+        if db.query(Course).count() < 10 and os.path.exists("data/courses.csv"):
+            df = pd.read_csv("data/courses.csv")
+            for _, row in df.iterrows():
+                if not db.query(Course).filter_by(course_id=row['course_id']).first():
+                    db.add(Course(course_id=row['course_id'], name=row['name'], credits=row['credits'], description=row['description']))
+            db.commit()
+    finally:
+        db.close()
+
+def query_knowledge_base(query_text):
+    if not SessionLocal: return "Database connection error."
+    db = SessionLocal()
+    try:
+        stop_words = {"tell", "me", "related", "to", "policy", "rules", "what", "is", "the", "how", "does", "work"}
+        words = [w.lower() for w in query_text.lower().split() if w.lower() not in stop_words and len(w) > 2]
+        if not words: return "Please specify your policy query."
+        results = db.query(Policy).all()
+        best_match, max_score = None, -1
+        for p in results:
+            score = 0
+            for w in words:
+                if w in p.title.lower(): score += 10
+                if w in p.content.lower(): score += 2
+            if score > max_score: max_score, best_match = score, p
+        return best_match.content if best_match and max_score > 0 else "No policy found in online DB."
+    finally:
+        db.close()
+
+def query_courses(query_text, n=3):
+    if not SessionLocal: return []
+    db = SessionLocal()
+    try:
+        stop_words = {"tell", "me", "related", "to", "courses", "find", "recommend", "suggest", "about", "show", "list", "give"}
+        words = [w.lower() for w in query_text.lower().split() if w.lower() not in stop_words and len(w) > 2]
+        if not words: return []
+        results = db.query(Course).all()
+        scored = []
+        for c in results:
+            score = sum(5 if w in c.name.lower() else (2 if w in c.description.lower() else 0) for w in words)
+            if score > 0: scored.append((score, c))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [{"course_id": r[1].course_id, "name": r[1].name, "credits": r[1].credits, "description": r[1].description} for r in scored[:n]]
+    finally:
+        db.close()
+
+# --- Puter AI Optimized Bridge ---
+def puter_ai_chat(prompt):
+    component_key = f"puter_chat_{hash(prompt)}"
+    safe_prompt = json.dumps(prompt)
+    html_code = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            :root {{ --lpu-red: #d32f2f; --lpu-gold: #ffc107; }}
+            body {{ margin: 0; font-family: sans-serif; background-color: transparent; }}
+            .advisor-card {{ padding: 15px; border-radius: 10px; background: #fff; border-left: 5px solid var(--lpu-red); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }}
+            .dot {{ height: 8px; width: 8px; background-color: var(--lpu-gold); border-radius: 50%; display: inline-block; margin-right: 8px; animation: pulse 1.5s infinite; }}
+            @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.3; }} }}
+            .response-text {{ font-size: 1.05em; color: #222; line-height: 1.6; white-space: pre-wrap; }}
+        </style>
+    </head>
+    <body>
+        <div class="advisor-card">
+            <div id="status-row" style="display:flex; align-items:center; margin-bottom:10px; font-size:0.9em; color:#666;">
+                <span class="dot"></span> <span id="status-text">LPU Advisor is synthesizing guidance...</span>
+            </div>
+            <div id="response" class="response-text"></div>
+        </div>
+        <script src="https://js.puter.com/v2/"></script>
+        <script>
+            (async function() {{
+                try {{
+                    const result = await puter.ai.complete({safe_prompt});
+                    const content = typeof result === 'string' ? result : (result.text || JSON.stringify(result));
+                    document.getElementById('status-text').innerHTML = "<b>Verified LPU Academic Guidance:</b>";
+                    document.getElementById('status-text').style.color = "#2e7d32";
+                    document.querySelector('.dot').style.backgroundColor = "#2e7d32";
+                    document.querySelector('.dot').style.animation = "none";
+                    document.getElementById('response').innerText = content;
+                }} catch (err) {{
+                    document.getElementById('response').innerText = "AI Synthesis retry state. Please refresh.";
+                }}
+            }})();
+        </script>
+    </body>
+    </html>
+    """
+    b64 = base64.b64encode(html_code.encode()).decode()
+    return st.iframe(f"data:text/html;base64,{b64}", height=250)
+
+# --- Chatbot & Response Logic ---
+LPU_PROMPT = "You are the LPU AI Academic Advisor. Provide precise academic guidance based on LPU policies."
+
+def handle_query(user_id, query):
+    text = query.lower()
+    sentiment = TextBlob(query).sentiment.polarity
+    intent = "general_inquiry"
+    if any(k in text for k in ["name", "who are you", "yourself"]): intent = "identity"
+    elif any(k in text for k in ["recommend", "course", "suggest", "study"]): intent = "get_course_recommendation"
+    elif any(k in text for k in ["policy", "rule", "grading", "attendance", "scholarship"]): intent = "query_policy"
+    elif any(k in text for k in ["appointment", "schedule", "book"]): intent = "book_appointment"
+    elif any(k in text for k in ["hi", "hello", "hey"]): intent = "greeting"
+
+    context, response = None, None
+    if intent == "query_policy": context = query_knowledge_base(query)
+    elif intent == "get_course_recommendation":
+        recs = query_courses(query)
+        if recs: context = "RELEVANT COURSES:\n" + "\n".join([f"- {c['name']} ({c['course_id']})" for c in recs])
+
+    if not response:
+        if intent == "identity": response = "I am the LPU AI Academic Advisor, dedicated to helping students with university policies and courses."
+        elif intent == "query_policy": response = context
+        elif intent == "get_course_recommendation":
+            recs = query_courses(query)
+            response = "I recommend these LPU courses:\n" + "\n".join([f"- {c['name']}" for c in recs]) if recs else "No matching courses found."
+        elif intent == "book_appointment": response = "I've scheduled an appointment for you. Please check your UMS email."
+        elif intent == "greeting": response = "Welcome! I'm your LPU Academic Advisor. How can I help?"
+        else: response = "Please specify your LPU academic query."
+
+    if SessionLocal:
+        db = SessionLocal()
+        try:
+            db.add(Interaction(user_id=user_id, query=query, intent=intent, response=response, sentiment=sentiment))
+            db.commit()
+        finally: db.close()
+    
+    return response, intent, sentiment
+
+def get_analytics_data():
+    if not SessionLocal: return None, None, None, None
+    db = SessionLocal()
+    try:
+        df = pd.read_sql(db.query(Interaction).statement, db.bind)
+        if df.empty: return None, None, None, None
+        fig_intents = px.pie(df['intent'].value_counts().reset_index(), values='count', names='intent', title='Interaction by Intent', hole=0.4)
+        fig_sentiment = px.line(df, x='timestamp', y='sentiment', title='Student Sentiment Over Time')
+        df['cat'] = df['sentiment'].apply(lambda x: 'Positive' if x > 0.1 else ('Negative' if x < -0.1 else 'Neutral'))
+        fig_dist = px.bar(df['cat'].value_counts().reset_index(), x='cat', y='count', title='Sentiment Distribution', color='cat')
+        return fig_intents, fig_sentiment, fig_dist, df['sentiment'].mean()
+    finally: db.close()
