@@ -8,8 +8,11 @@ from sqlalchemy.orm import sessionmaker
 import datetime
 
 # --- Configuration ---
-# Fallback to local SQLite if no DATABASE_URL is provided (Professional standard)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/student_interactions.db")
+# SQLAlchemy 2.0+ requires 'postgresql://' instead of 'postgres://'
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
 CHROMA_PATH = "data/chroma_db"
 
 # --- SQLAlchemy Setup ---
