@@ -23,18 +23,17 @@ Context will be provided for specific queries. You must also consider the CONVER
 
 async def _call_puter_ai_automated(query, context, history=""):
     """
-    Calls Puter AI. Uses PUTER_TOKEN if available, otherwise attempts 
-    anonymous guest access (supported by putergenai SDK).
+    Calls Puter AI. Uses PUTER_TOKEN if available.
+    If no token is present, returns None to trigger the seamless 
+    frontend Puter.js bridge (which supports anonymous guest sessions).
     """
     puter_token = os.getenv("PUTER_TOKEN")
+    if not puter_token:
+        # Avoid 'No token available' noise in logs; let frontend handle it
+        return None
     
     try:
-        # If no token, initialize without the token argument for guest access
-        if puter_token:
-            client = PuterClient(token=puter_token)
-        else:
-            client = PuterClient()
-
+        client = PuterClient(token=puter_token)
         async with client as c:
             prompt = f"{LPU_ADVISOR_SYSTEM_PROMPT}\n\n"
             if history:
@@ -43,7 +42,7 @@ async def _call_puter_ai_automated(query, context, history=""):
                 prompt += f"KNOWLEDGE CONTEXT:\n{context}\n\n"
             prompt += f"USER QUERY: {query}\nADVISOR RESPONSE:"
             
-            # Using gpt-4o-mini as it's widely available for guest access
+            # Using gpt-4o-mini as it's widely available
             result = await c.ai_chat(prompt, options={"model": "gpt-4o-mini"})
             
             if isinstance(result, dict) and "response" in result:
@@ -55,8 +54,7 @@ async def _call_puter_ai_automated(query, context, history=""):
             
             return None
     except Exception as e:
-        # Log error but don't crash; let other fallbacks take over
-        print(f"Puter Backend (Guest Mode) Error: {e}")
+        print(f"Puter Backend SDK Error: {e}")
         return None
 
 def generate_response_with_llm(query, context, intent, history=""):

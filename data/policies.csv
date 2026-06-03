@@ -1,0 +1,9 @@
+policy_id,title,content
+LPU001,Attendance Policy,"Lovely Professional University (LPU) requires a minimum of 75% attendance in all courses. Students falling below this threshold may be debarred from appearing in end-term examinations."
+LPU002,Grading System,"LPU follows a 10-point CGPA system. Grades range from O (Outstanding) to E (Fail), with O equivalent to 10 points and D equivalent to 4 points."
+LPU003,Academic Probation,"Students with a CGPA below 4.0 at the end of an academic year are placed on academic probation and must attend remedial classes."
+LPU004,Scholarship Criteria,"LPU offers various scholarships based on LPUNEST scores, previous academic performance, and sports achievements. Students must maintain a minimum CGPA of 6.5 to continue scholarships."
+LPU005,Placement Eligibility,"To be eligible for LPU placement drives, students must have a CGPA of 6.0 or above and no active backlogs."
+LPU006,Course Registration,"Course registration at LPU is handled through the UMS (University Management System) portal during the designated registration window each semester."
+LPU007,MCA Fee Structure,"The fee structure for the Master of Computer Applications (MCA) at Lovely Professional University is approximately INR 80,000 to 1,20,000 per semester, depending on the scholarship tier (LPUNEST score). Additional hostel and examination fees apply."
+LPU008,Admission Policy,"Admission to LPU is primarily based on the LPUNEST (Lovely Professional University National Entrance and Scholarship Test). Eligibility varies by course; for MCA, a graduation degree with 50% marks is required."

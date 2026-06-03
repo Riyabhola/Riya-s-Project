@@ -1,0 +1,11 @@
+course_id,name,department,credits,description,level
+CSE101,C Programming,Computer Science,4,Foundational course covering C syntax loops and memory management,Introductory
+CSE202,Data Structures & Algorithms,Computer Science,4,In-depth study of linked lists trees and sorting algorithms using C++ or Java,Intermediate
+INT213,Python Programming,Information Technology,4,Focuses on data analysis and automation using Python libraries,Intermediate
+MGT101,Principles of Management,Management,3,Introduction to organizational behavior and management theories,Introductory
+ECE201,Digital Electronics,Electronics,4,Study of logic gates flip-flops and circuit design,Intermediate
+MTH165,Calculus & Algebra,Mathematics,4,Complex variables and linear algebra for engineering students,Introductory
+ENG101,Communication Skills I,English,2,Enhancing professional writing and verbal communication,Introductory
+MBA501,Financial Management,Management,4,Advanced financial analysis for business decision making,Advanced
+BI0101,Cell Biology,Biotechnology,4,Fundamental study of cell structure and genetic mechanisms,Introductory
+CHE110,Engineering Chemistry,Chemistry,3,Applied chemistry for industrial and engineering applications,Introductory

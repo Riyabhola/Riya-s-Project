@@ -71,6 +71,7 @@ def puter_ai_chat(prompt):
     """
     
     # Render the component with enough height and scrolling
+    # st.components.v1.html is the standard for custom HTML; the warning may be version-specific
     return components.html(html_code, height=350, scrolling=True)
 
 # --- Updated handle_query Fallback ---
