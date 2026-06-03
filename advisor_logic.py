@@ -252,6 +252,7 @@ def puter_ai_chat(prompt):
                         stream: false
                     }});
 
+
                     let content = "";
                     if (typeof result === 'string') content = result;
                     else if (result?.text) content = result.text;
