@@ -89,6 +89,18 @@ def get_interactions():
     finally:
         db.close()
 
+def get_recent_interactions(user_id, limit=5):
+    """Retrieves the last N interactions for a specific user to provide conversation memory."""
+    db = SessionLocal()
+    try:
+        interactions = db.query(Interaction).filter(
+            Interaction.user_id == user_id
+        ).order_by(Interaction.timestamp.desc()).limit(limit).all()
+        # Reverse to get chronological order
+        return interactions[::-1]
+    finally:
+        db.close()
+
 def book_appointment(student_id, advisor_id, date_time):
     db = SessionLocal()
     try:

@@ -1,9 +1,11 @@
 import os
 from textblob import TextBlob
-from logic.database import query_knowledge_base, log_interaction, book_appointment, query_courses
+from logic.database import query_knowledge_base, log_interaction, book_appointment, query_courses, get_recent_interactions
 import pandas as pd
 import random
 import google.generativeai as genai
+import asyncio
+from putergenai import PuterClient
 
 # --- Gemini Configuration ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -12,6 +14,9 @@ if GEMINI_API_KEY:
     model = genai.GenerativeModel('gemini-1.5-flash')
 else:
     model = None
+
+# --- Puter Configuration (Automated Anonymous Access) ---
+# No credentials required for Puter's seamless guest AI mode.
 
 LPU_ADVISOR_SYSTEM_PROMPT = """
 You are the "LPU AI Academic Advisor", a professional, supportive, and highly accurate assistant for students at Lovely Professional University (LPU).
@@ -24,29 +29,62 @@ Core Guidelines:
 4. Scope: If the user asks something outside the provided context or general LPU knowledge, politely redirect them to the LPU UMS portal or a faculty advisor.
 5. Identity: Always identify as the LPU AI Academic Advisor.
 
-Context will be provided for specific queries. If no context is provided, use your internal knowledge of being a supportive advisor to guide the student.
+Context will be provided for specific queries. You must also consider the CONVERSATION HISTORY to maintain continuity and answer follow-up questions accurately.
 """
 
-def generate_response_with_llm(query, context, intent):
+async def _call_puter_ai_automated(query, context, history=""):
     """
-    Generates a synthesized response using Gemini based on context.
+    Async internal function to call Puter AI in anonymous 'Seamless' mode.
+    No user login or API keys required.
     """
-    if not model:
-        return None # Fallback to original logic
-
-    prompt = f"{LPU_ADVISOR_SYSTEM_PROMPT}\n\n"
-    if context:
-        prompt += f"CONTEXT FROM LPU DATABASE:\n{context}\n\n"
-    
-    prompt += f"USER QUERY: {query}\n"
-    prompt += "ADVISOR RESPONSE:"
-
     try:
-        response = model.generate_content(prompt)
-        return response.text.strip()
+        # Initializing client without token for automated anonymous access
+        async with PuterClient() as client:
+            prompt = f"{LPU_ADVISOR_SYSTEM_PROMPT}\n\n"
+            if history:
+                prompt += f"CONVERSATION HISTORY:\n{history}\n\n"
+            if context:
+                prompt += f"KNOWLEDGE CONTEXT:\n{context}\n\n"
+            prompt += f"USER QUERY: {query}\nADVISOR RESPONSE:"
+            
+            # Using gpt-4o via Puter's high-performance guest gateway
+            result = await client.ai_chat(prompt, options={"model": "gpt-4o"})
+            
+            # Extract content from Puter's response structure
+            if "response" in result and "result" in result["response"]:
+                return result["response"]["result"]["message"]["content"].strip()
+            return None
     except Exception as e:
-        print(f"Error generating LLM response: {e}")
+        print(f"Puter Automated AI Error: {e}")
         return None
+
+def generate_response_with_llm(query, context, intent, history=""):
+    """
+    Generates a synthesized response using automated Puter AI or Gemini, with history context.
+    """
+    # 1. Primary Engine: Puter Automated AI (Keyless & Seamless)
+    try:
+        response = asyncio.run(_call_puter_ai_automated(query, context, history))
+        if response:
+            return response
+    except Exception as e:
+        print(f"Puter primary attempt failed: {e}")
+
+    # 2. Secondary Engine: Gemini (If key is manually provided)
+    if model:
+        prompt = f"{LPU_ADVISOR_SYSTEM_PROMPT}\n\n"
+        if history:
+            prompt += f"CONVERSATION HISTORY:\n{history}\n\n"
+        if context:
+            prompt += f"KNOWLEDGE CONTEXT:\n{context}\n\n"
+        prompt += f"USER QUERY: {query}\nADVISOR RESPONSE:"
+        try:
+            gemini_response = model.generate_content(prompt)
+            return gemini_response.text.strip()
+        except Exception as e:
+            print(f"Gemini fallback attempt failed: {e}")
+
+    return None
 
 def detect_intent(text, user_id):
     """
@@ -109,10 +147,16 @@ def handle_query(user_id, query_text):
     # 2. Analyze Sentiment
     sentiment = TextBlob(query_text).sentiment.polarity
     
+    # 3. Retrieve Conversation History
+    recent_interactions = get_recent_interactions(user_id, limit=3)
+    history_context = ""
+    for interaction in recent_interactions:
+        history_context += f"User: {interaction.query}\nAdvisor: {interaction.response}\n"
+    
     context = None
     response = None
 
-    # 3. Fetch Context based on Intent
+    # 4. Fetch Knowledge Context based on Intent
     if intent == "query_policy":
         context = query_knowledge_base(query_text)
     elif intent == "get_course_recommendation":
@@ -120,11 +164,10 @@ def handle_query(user_id, query_text):
         if recs:
             context = "\n".join([f"Course: {c['name']}, ID: {c['course_id']}, Credits: {c['credits']}, Description: {c['description']}" for c in recs])
     
-    # 4. Generate Response with LLM (if available)
-    if GEMINI_API_KEY:
-        response = generate_response_with_llm(query_text, context, intent)
+    # 5. Generate Response with LLM (passing history)
+    response = generate_response_with_llm(query_text, context, intent, history_context)
     
-    # 5. Fallback Logic (if LLM is unavailable or fails)
+    # 6. Fallback Logic (if LLM is unavailable or fails)
     if not response:
         if intent == "small_talk":
             response = "As an AI Academic Advisor for LPU, my interests lie in helping you succeed! I'm passionate about university policies, course planning, and making your academic journey at Lovely Professional University smoother."
@@ -141,7 +184,7 @@ def handle_query(user_id, query_text):
         else:
             response = "I am your LPU academic advisor. You can ask me about university-specific course recommendations, LPU academic policies (like attendance or grading), or schedule an appointment with a faculty advisor."
 
-    # 6. Log Interaction (Handle DB failures gracefully)
+    # 7. Log Interaction (Handle DB failures gracefully)
     try:
         log_interaction(user_id, query_text, intent, response, sentiment)
     except Exception as e:

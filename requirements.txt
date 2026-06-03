@@ -9,3 +9,4 @@ sentence-transformers
 SQLAlchemy
 psycopg2-binary
 google-generativeai
+putergenai
