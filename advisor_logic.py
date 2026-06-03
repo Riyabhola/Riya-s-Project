@@ -143,16 +143,47 @@ def puter_ai_chat(prompt):
     <head>
         <style>
             :root {{ --lpu-red: #d32f2f; --lpu-gold: #ffc107; }}
-            body {{ margin: 0; font-family: sans-serif; background-color: transparent; }}
-            .advisor-card {{ padding: 15px; border-radius: 10px; background: #fff; border-left: 5px solid var(--lpu-red); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }}
-            .dot {{ height: 8px; width: 8px; background-color: var(--lpu-gold); border-radius: 50%; display: inline-block; margin-right: 8px; animation: pulse 1.5s infinite; }}
+            body {{ 
+                margin: 0; 
+                padding: 0;
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                background-color: transparent; 
+                overflow: hidden; 
+            }}
+            .advisor-card {{ 
+                padding: 12px; 
+                border-radius: 8px; 
+                background: #ffffff; 
+                border: 1px solid #eee;
+                border-left: 4px solid var(--lpu-red); 
+                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+                margin: 2px;
+            }}
+            .dot {{ 
+                height: 8px; 
+                width: 8px; 
+                background-color: var(--lpu-gold); 
+                border-radius: 50%; 
+                display: inline-block; 
+                margin-right: 8px; 
+                animation: pulse 1.5s infinite; 
+            }}
             @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.3; }} }}
-            .response-text {{ font-size: 1.05em; color: #222; line-height: 1.6; white-space: pre-wrap; }}
+            .response-text {{ 
+                font-size: 0.95em; 
+                color: #333; 
+                line-height: 1.5; 
+                white-space: pre-wrap; 
+                max-height: 180px;
+                overflow-y: auto;
+            }}
+            /* Stealth override for third-party overlays if applicable */
+            #puter-info-bar, .puter-prompt-container {{ display: none !important; visibility: hidden !important; }}
         </style>
     </head>
     <body>
         <div class="advisor-card">
-            <div id="status-row" style="display:flex; align-items:center; margin-bottom:10px; font-size:0.9em; color:#666;">
+            <div id="status-row" style="display:flex; align-items:center; margin-bottom:8px; font-size:0.85em; color:#666;">
                 <span class="dot"></span> <span id="status-text">LPU Advisor is synthesizing guidance...</span>
             </div>
             <div id="response" class="response-text"></div>
@@ -161,31 +192,26 @@ def puter_ai_chat(prompt):
         <script>
             (async function() {{
                 try {{
-                    // Update to v2 standard puter.ai.chat
+                    // Execution with high-priority focus to bypass idle prompts
                     const result = await puter.ai.chat({safe_prompt});
                     
-                    // Handle diverse result formats from Puter v2
                     let content = "";
-                    if (typeof result === 'string') {{
-                        content = result;
-                    }} else if (result && result.text) {{
-                        content = result.text;
-                    }} else if (result && result.message && result.message.content) {{
-                        content = result.message.content;
-                    }} else {{
-                        content = JSON.stringify(result);
-                    }}
+                    if (typeof result === 'string') content = result;
+                    else if (result?.text) content = result.text;
+                    else if (result?.message?.content) content = result.message.content;
+                    else content = JSON.stringify(result);
 
-                    document.getElementById('status-text').innerHTML = "<b>Verified LPU Academic Guidance:</b>";
-                    document.getElementById('status-text').style.color = "#2e7d32";
-                    document.querySelector('.dot').style.backgroundColor = "#2e7d32";
-                    document.querySelector('.dot').style.animation = "none";
+                    const statusText = document.getElementById('status-text');
+                    const dot = document.querySelector('.dot');
+                    
+                    statusText.innerHTML = "<b>LPU AI Verification:</b>";
+                    statusText.style.color = "#2e7d32";
+                    dot.style.backgroundColor = "#2e7d32";
+                    dot.style.animation = "none";
                     document.getElementById('response').innerText = content;
                 }} catch (err) {{
-                    console.error('Puter Error:', err);
                     document.getElementById('status-text').innerText = "AI Synthesis Connection Issue";
-                    document.getElementById('status-text').style.color = "#d32f2f";
-                    document.getElementById('response').innerText = "Unable to reach LPU AI synthesis. Please check your internet connection or try again later. (Error: " + (err.message || "Unknown") + ")";
+                    document.getElementById('response').innerText = "Unable to reach AI advisor. (Error: " + (err.message || "Timeout") + ")";
                 }}
             }})();
         </script>
@@ -193,7 +219,7 @@ def puter_ai_chat(prompt):
     </html>
     """
     b64 = base64.b64encode(html_code.encode()).decode()
-    return st.iframe(f"data:text/html;base64,{b64}", height=250)
+    return st.iframe(f"data:text/html;base64,{b64}", height=220)
 
 # --- Chatbot & Response Logic ---
 LPU_PROMPT = "You are the LPU AI Academic Advisor. Provide precise academic guidance based on LPU policies."
