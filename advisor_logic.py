@@ -222,9 +222,9 @@ def puter_ai_chat(prompt):
                                         console.log("Shadow Proxy: Auto-Accepted Consent");
                                     }}
                                 }});
-                            }
+                            }}
                         }});
-                    }
+                    }}
                 }});
 
                 observer.observe(document.body, {{ childList: true, subtree: true }});
