@@ -115,13 +115,36 @@ def book_appointment(student_id, advisor_id, date_time):
         db.close()
 
 # --- ChromaDB (Vector Knowledge Base) ---
+def get_embedding_function():
+    """
+    Returns a robust embedding function using SentenceTransformers.
+    Avoids the default Chroma ONNX implementation which often suffers from
+    INVALID_PROTOBUF errors in cloud environments.
+    """
+    try:
+        return embedding_functions.SentenceTransformerEmbeddingFunction(model_name="all-MiniLM-L6-v2")
+    except Exception as e:
+        print(f"Warning: SentenceTransformer initialization failed: {e}. Falling back to default.")
+        return embedding_functions.DefaultEmbeddingFunction()
+
 def init_chroma():
     """Initializes ChromaDB from CSV files if not already present."""
     client = chromadb.PersistentClient(path=CHROMA_PATH)
-    emb_fn = embedding_functions.DefaultEmbeddingFunction()
+    emb_fn = get_embedding_function()
     
+    # Function to safely get or recreate collection
+    def get_safe_collection(name):
+        try:
+            return client.get_or_create_collection(name=name, embedding_function=emb_fn)
+        except Exception as e:
+            if "Embedding function conflict" in str(e):
+                print(f"Embedding conflict for {name}, recreating collection...")
+                client.delete_collection(name=name)
+                return client.create_collection(name=name, embedding_function=emb_fn)
+            raise e
+
     # 1. Policies Collection
-    policy_collection = client.get_or_create_collection(name="policies", embedding_function=emb_fn)
+    policy_collection = get_safe_collection("policies")
     if policy_collection.count() == 0:
         if os.path.exists("data/policies.csv"):
             policies_df = pd.read_csv("data/policies.csv")
@@ -132,7 +155,7 @@ def init_chroma():
             )
     
     # 2. Courses Collection
-    course_collection = client.get_or_create_collection(name="courses", embedding_function=emb_fn)
+    course_collection = get_safe_collection("courses")
     if course_collection.count() == 0:
         if os.path.exists("data/courses.csv"):
             courses_df = pd.read_csv("data/courses.csv")
@@ -150,7 +173,7 @@ def init_chroma():
 
 def query_courses(query_text, n_results=3):
     client = chromadb.PersistentClient(path=CHROMA_PATH)
-    emb_fn = embedding_functions.DefaultEmbeddingFunction()
+    emb_fn = get_embedding_function()
     collection = client.get_collection(name="courses", embedding_function=emb_fn)
     
     results = collection.query(
@@ -161,7 +184,7 @@ def query_courses(query_text, n_results=3):
 
 def query_knowledge_base(query_text, n_results=1):
     client = chromadb.PersistentClient(path=CHROMA_PATH)
-    emb_fn = embedding_functions.DefaultEmbeddingFunction()
+    emb_fn = get_embedding_function()
     collection = client.get_collection(name="policies", embedding_function=emb_fn)
     
     results = collection.query(
