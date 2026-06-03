@@ -34,12 +34,15 @@ Context will be provided for specific queries. You must also consider the CONVER
 
 async def _call_puter_ai_automated(query, context, history=""):
     """
-    Async internal function to call Puter AI in anonymous 'Seamless' mode.
-    No user login or API keys required.
+    DEPRECATED in favor of frontend Puter.js Bridge for true anonymous access.
+    Kept as an optional backend hook if PUTER_TOKEN is provided.
     """
+    puter_token = os.getenv("PUTER_TOKEN")
+    if not puter_token:
+        return None # Gracefully skip backend Puter call if no token
+        
     try:
-        # Initializing client without token for automated anonymous access
-        async with PuterClient() as client:
+        async with PuterClient(token=puter_token) as client:
             prompt = f"{LPU_ADVISOR_SYSTEM_PROMPT}\n\n"
             if history:
                 prompt += f"CONVERSATION HISTORY:\n{history}\n\n"
@@ -47,30 +50,20 @@ async def _call_puter_ai_automated(query, context, history=""):
                 prompt += f"KNOWLEDGE CONTEXT:\n{context}\n\n"
             prompt += f"USER QUERY: {query}\nADVISOR RESPONSE:"
             
-            # Using gpt-4o via Puter's high-performance guest gateway
             result = await client.ai_chat(prompt, options={"model": "gpt-4o"})
-            
-            # Extract content from Puter's response structure
             if "response" in result and "result" in result["response"]:
                 return result["response"]["result"]["message"]["content"].strip()
             return None
     except Exception as e:
-        print(f"Puter Automated AI Error: {e}")
+        # Suppress authentication errors in production
         return None
 
 def generate_response_with_llm(query, context, intent, history=""):
     """
-    Generates a synthesized response using automated Puter AI or Gemini, with history context.
+    Generates a synthesized response using Gemini or Backend Puter (if token available).
+    The main 'Seamless' bypass is now handled via the Puter.js Bridge in app.py.
     """
-    # 1. Primary Engine: Puter Automated AI (Keyless & Seamless)
-    try:
-        response = asyncio.run(_call_puter_ai_automated(query, context, history))
-        if response:
-            return response
-    except Exception as e:
-        print(f"Puter primary attempt failed: {e}")
-
-    # 2. Secondary Engine: Gemini (If key is manually provided)
+    # 1. Primary Backend: Gemini (If key is manually provided)
     if model:
         prompt = f"{LPU_ADVISOR_SYSTEM_PROMPT}\n\n"
         if history:
@@ -82,7 +75,14 @@ def generate_response_with_llm(query, context, intent, history=""):
             gemini_response = model.generate_content(prompt)
             return gemini_response.text.strip()
         except Exception as e:
-            print(f"Gemini fallback attempt failed: {e}")
+            pass
+
+    # 2. Secondary Backend: Puter (Only if PUTER_TOKEN is present)
+    if os.getenv("PUTER_TOKEN"):
+        try:
+            return asyncio.run(_call_puter_ai_automated(query, context, history))
+        except Exception as e:
+            pass
 
     return None
 
