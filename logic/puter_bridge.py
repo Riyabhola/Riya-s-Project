@@ -71,7 +71,7 @@ def puter_ai_chat(prompt):
     """
     
     # Render the component with enough height and scrolling
-    return components.html(html_code, height=350, scrolling=True, key=component_key)
+    return components.html(html_code, height=350, scrolling=True)
 
 # --- Updated handle_query Fallback ---
 # I will update chatbot.py to use this bridge when in UI mode.
