@@ -22,8 +22,19 @@ def detect_intent(text, user_id):
 # Mock Dialogflow logic
 def detect_intent_mock(text):
     text = text.lower()
-    if any(k in text for k in ["recommend", "course", "suggest", "take", "classes", "interest", "learn"]):
+    
+    # 1. Bot Personality / Small Talk (Priority)
+    if any(k in text for k in ["your interest", "who are you", "what do you do", "about yourself", "how are you"]):
+        return "small_talk", {}
+        
+    # 2. Course Recommendations (Refined keywords to avoid collision with 'interest')
+    if any(k in text for k in ["recommend", "course", "suggest", "take classes", "which subject", "learn about"]):
         return "get_course_recommendation", {}
+    
+    # Check for 'interest' only if not already handled by small talk
+    if "interest" in text and "your" not in text:
+        return "get_course_recommendation", {}
+
     elif any(k in text for k in ["policy", "rule", "requirement", "grading", "scale", "probation", "credit", "hours", "graduate", "attendance", "scholarship", "ums", "placement"]):
         return "query_policy", {}
     elif any(k in text for k in ["appointment", "schedule", "book", "meeting", "advisor", "see someone"]):
@@ -55,7 +66,9 @@ def handle_query(user_id, query_text):
     sentiment = TextBlob(query_text).sentiment.polarity
     
     # 3. Generate Response based on Intent
-    if intent == "query_policy":
+    if intent == "small_talk":
+        response = "As an AI Academic Advisor for LPU, my interests lie in helping you succeed! I'm passionate about university policies, course planning, and making your academic journey at Lovely Professional University smoother."
+    elif intent == "query_policy":
         response = query_knowledge_base(query_text)
     elif intent == "get_course_recommendation":
         response = get_course_recommendations(query_text)
