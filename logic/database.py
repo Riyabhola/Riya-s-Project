@@ -8,7 +8,10 @@ from sqlalchemy.orm import sessionmaker
 import datetime
 
 # --- Configuration ---
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///data/student_interactions.db")
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL environment variable is missing. Aiven PostgreSQL is required.")
+
 # SQLAlchemy 2.0+ requires 'postgresql://' instead of 'postgres://'
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
@@ -17,22 +20,19 @@ CHROMA_PATH = "data/chroma_db"
 
 # --- SQLAlchemy Setup ---
 def create_db_engine():
-    db_url = os.getenv("DATABASE_URL", "sqlite:///data/student_interactions.db")
-    # SQLAlchemy 2.0+ requires 'postgresql://' instead of 'postgres://'
-    if db_url.startswith("postgres://"):
-        db_url = db_url.replace("postgres://", "postgresql://", 1)
-    
+    """
+    Creates an engine exclusively for Aiven PostgreSQL.
+    No local SQLite fallbacks are permitted.
+    """
     try:
-        temp_engine = create_engine(db_url)
-        # Try to connect to verify the URL/credentials are valid
-        with temp_engine.connect() as conn:
-            pass
-        return temp_engine
+        engine = create_engine(DATABASE_URL)
+        # Verify connectivity immediately
+        with engine.connect() as conn:
+            print("Successfully connected to Aiven PostgreSQL.")
+        return engine
     except Exception as e:
-        print(f"Warning: Primary database connection failed ({e}). Falling back to local SQLite.")
-        # Ensure data directory exists
-        os.makedirs("data", exist_ok=True)
-        return create_engine("sqlite:///data/student_interactions.db")
+        print(f"CRITICAL: Failed to connect to Aiven PostgreSQL: {e}")
+        raise RuntimeError(f"Database connection failed: {e}")
 
 engine = create_db_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

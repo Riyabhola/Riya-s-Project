@@ -1,20 +1,12 @@
 import os
 from textblob import TextBlob
 from logic.database import query_knowledge_base, log_interaction, book_appointment, query_courses, get_recent_interactions
-from google import genai
 import asyncio
 from putergenai import PuterClient
 
-# --- Gemini Configuration ---
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if GEMINI_API_KEY:
-    client = genai.Client(api_key=GEMINI_API_KEY)
-    gemini_model_id = 'gemini-1.5-flash'
-else:
-    client = None
-
 # --- Puter Configuration (Automated Anonymous Access) ---
 # No credentials required for Puter's seamless guest AI mode.
+# Gemini has been removed as per professional mandate.
 
 LPU_ADVISOR_SYSTEM_PROMPT = """
 You are the "LPU AI Academic Advisor", a professional, supportive, and highly accurate assistant for students at Lovely Professional University (LPU).
@@ -70,26 +62,9 @@ async def _call_puter_ai_automated(query, context, history=""):
 
 def generate_response_with_llm(query, context, intent, history=""):
     """
-    Generates a synthesized response using Gemini or Puter (Anonymous/Token).
+    Generates a synthesized response exclusively using Puter AI.
     """
-    # 1. Primary Backend: Gemini (If key is provided)
-    if client:
-        prompt = f"{LPU_ADVISOR_SYSTEM_PROMPT}\n\n"
-        if history:
-            prompt += f"CONVERSATION HISTORY:\n{history}\n\n"
-        if context:
-            prompt += f"KNOWLEDGE CONTEXT:\n{context}\n\n"
-        prompt += f"USER QUERY: {query}\nADVISOR RESPONSE:"
-        try:
-            gemini_response = client.models.generate_content(
-                model=gemini_model_id,
-                contents=prompt
-            )
-            return gemini_response.text.strip()
-        except Exception as e:
-            print(f"Gemini Error: {e}")
-
-    # 2. Secondary Backend: Puter (Now supports anonymous fallback)
+    # Puter is now the sole AI provider for the project.
     try:
         puter_response = asyncio.run(_call_puter_ai_automated(query, context, history))
         if puter_response:

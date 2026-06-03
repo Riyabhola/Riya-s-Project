@@ -2,10 +2,10 @@
 
 ## Tech Stack
 - **Frontend/App:** Streamlit
-- **NLP:** Keyword-based Mock + LLM Synthesis
-- **LLM SDK:** google-genai (Gemini 1.5 Flash)
+- **NLP:** Keyword-based Mock + Puter AI Synthesis
+- **AI Engine:** Puter.js (100% Automated/Keyless)
 - **Vector DB:** ChromaDB (RAG for LPU Policies)
-- **Database:** SQLAlchemy (Aiven PostgreSQL / Local SQLite)
+- **Database:** Aiven PostgreSQL (Exclusive Online Storage)
 - **Analytics:** Pandas/Plotly
 - **Sentiment:** TextBlob
 
