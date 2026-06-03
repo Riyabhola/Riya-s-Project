@@ -16,7 +16,25 @@ if DATABASE_URL.startswith("postgres://"):
 CHROMA_PATH = "data/chroma_db"
 
 # --- SQLAlchemy Setup ---
-engine = create_engine(DATABASE_URL)
+def create_db_engine():
+    db_url = os.getenv("DATABASE_URL", "sqlite:///data/student_interactions.db")
+    # SQLAlchemy 2.0+ requires 'postgresql://' instead of 'postgres://'
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    
+    try:
+        temp_engine = create_engine(db_url)
+        # Try to connect to verify the URL/credentials are valid
+        with temp_engine.connect() as conn:
+            pass
+        return temp_engine
+    except Exception as e:
+        print(f"Warning: Primary database connection failed ({e}). Falling back to local SQLite.")
+        # Ensure data directory exists
+        os.makedirs("data", exist_ok=True)
+        return create_engine("sqlite:///data/student_interactions.db")
+
+engine = create_db_engine()
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
@@ -39,8 +57,12 @@ class Appointment(Base):
     status = Column(String(50), default="Scheduled")
 
 def init_sqlite():
-    """Initializes the relational database schema (SQLite/Postgres)."""
-    Base.metadata.create_all(bind=engine)
+    """Initializes the relational database schema."""
+    try:
+        Base.metadata.create_all(bind=engine)
+        print(f"Database initialized successfully using: {engine.url}")
+    except Exception as e:
+        print(f"Critical Error: Could not initialize database schema: {e}")
 
 def log_interaction(user_id, query, intent, response, sentiment):
     db = SessionLocal()
