@@ -5,6 +5,8 @@ textblob
 pandas
 plotly
 sentence-transformers
+torch
+torchvision
 SQLAlchemy
 psycopg2-binary
 google-generativeai
