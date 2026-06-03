@@ -2,7 +2,7 @@ import pandas as pd
 import chromadb
 from chromadb.utils import embedding_functions
 import os
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text, create_engine
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 import datetime

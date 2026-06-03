@@ -1,8 +1,6 @@
 import os
 from textblob import TextBlob
 from logic.database import query_knowledge_base, log_interaction, book_appointment, query_courses, get_recent_interactions
-import pandas as pd
-import random
 import google.generativeai as genai
 import asyncio
 from putergenai import PuterClient
