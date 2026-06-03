@@ -161,15 +161,31 @@ def puter_ai_chat(prompt):
         <script>
             (async function() {{
                 try {{
-                    const result = await puter.ai.complete({safe_prompt});
-                    const content = typeof result === 'string' ? result : (result.text || JSON.stringify(result));
+                    // Update to v2 standard puter.ai.chat
+                    const result = await puter.ai.chat({safe_prompt});
+                    
+                    // Handle diverse result formats from Puter v2
+                    let content = "";
+                    if (typeof result === 'string') {{
+                        content = result;
+                    }} else if (result && result.text) {{
+                        content = result.text;
+                    }} else if (result && result.message && result.message.content) {{
+                        content = result.message.content;
+                    }} else {{
+                        content = JSON.stringify(result);
+                    }}
+
                     document.getElementById('status-text').innerHTML = "<b>Verified LPU Academic Guidance:</b>";
                     document.getElementById('status-text').style.color = "#2e7d32";
                     document.querySelector('.dot').style.backgroundColor = "#2e7d32";
                     document.querySelector('.dot').style.animation = "none";
                     document.getElementById('response').innerText = content;
                 }} catch (err) {{
-                    document.getElementById('response').innerText = "AI Synthesis retry state. Please refresh.";
+                    console.error('Puter Error:', err);
+                    document.getElementById('status-text').innerText = "AI Synthesis Connection Issue";
+                    document.getElementById('status-text').style.color = "#d32f2f";
+                    document.getElementById('response').innerText = "Unable to reach LPU AI synthesis. Please check your internet connection or try again later. (Error: " + (err.message || "Unknown") + ")";
                 }}
             }})();
         </script>
