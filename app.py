@@ -74,13 +74,15 @@ def show_chat():
             use_puter = False
             p_prompt = ""
             # If the initial response is too short or no policy found, enhance with AI
-            if len(res) < 50 or "No policy" in res or "No matching" in res:
+            if isinstance(res, str) and (len(res) < 50 or "No policy" in res or "No matching" in res):
                 use_puter = True
                 p_prompt = f"As an LPU Advisor, answer this query using university context: {prompt}"
                 # Get the enhanced response from AI - completely automated, no UI popups
                 enhanced_res = advisor_logic.puter_ai_chat(p_prompt)
-                if enhanced_res and len(enhanced_res) > 20:
+                if isinstance(enhanced_res, str) and len(enhanced_res) > 20:
                     res = enhanced_res  # Use the AI-enhanced response
+                elif enhanced_res is not None:
+                    res = str(enhanced_res)
             
             st.markdown(res)
             st.session_state.messages.append({"role": "assistant", "content": res, "use_puter": use_puter, "puter_prompt": p_prompt})

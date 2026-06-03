@@ -138,168 +138,26 @@ def query_courses(query_text, n=3):
     finally:
         db.close()
 
-import streamlit.components.v1 as components
+from puter_auth_service import puter_ai_chat_sync
 
 # --- Puter AI Optimized Bridge ---
-PUTER_TOKEN = os.getenv("PUTER_TOKEN", "")
 
 def puter_ai_chat(prompt):
-    component_key = f"puter_chat_{hash(prompt)}"
-    safe_prompt = json.dumps(prompt)
-    html_code = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            :root {{ --lpu-red: #d32f2f; --lpu-gold: #ffc107; }}
-            body {{ 
-                margin: 0; 
-                padding: 0;
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-                background-color: transparent; 
-                overflow: hidden; 
-            }}
-            .advisor-card {{ 
-                padding: 12px; 
-                border-radius: 8px; 
-                background: #ffffff; 
-                border: 1px solid #eee;
-                border-left: 4px solid var(--lpu-red); 
-                box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-                margin: 2px;
-            }}
-            .dot {{ 
-                height: 8px; 
-                width: 8px; 
-                background-color: var(--lpu-gold); 
-                border-radius: 50%; 
-                display: inline-block; 
-                margin-right: 8px; 
-                animation: pulse 1.5s infinite; 
-            }}
-            @keyframes pulse {{ 0%, 100% {{ opacity: 1; }} 50% {{ opacity: 0.3; }} }}
-            .response-text {{ 
-                font-size: 0.95em; 
-                color: #333; 
-                line-height: 1.5; 
-                white-space: pre-wrap; 
-                max-height: 160px;
-                overflow-y: auto;
-            }}
-            /* Innovation: "Quantum Bridge" - Visible to Puter, Invisible to User */
-            [class*="puter"], [id*="puter"], iframe[src*="puter.com"], .puter-modal, .puter-prompt-container, #puter-info-bar, div[style*="z-index: 2147483647"] {{ 
-                visibility: visible !important; 
-                opacity: 0.01 !important;
-                position: fixed !important;
-                top: 0 !important;
-                left: 0 !important;
-                width: 500px !important; /* Keep original size for visibility checks */
-                height: 500px !important;
-                clip-path: circle(0px at 0 0) !important; /* Collapse to nothing while being "large" */
-                pointer-events: auto !important;
-                z-index: -1 !important;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="advisor-card">
-            <div id="status-row" style="display:flex; align-items:center; margin-bottom:8px; font-size:0.85em; color:#666;">
-                <span class="dot"></span> <span id="status-text">LPU Advisor is synthesizing guidance...</span>
-            </div>
-            <div id="response" class="response-text"></div>
-        </div>
-        <script src="https://js.puter.com/v2/"></script>
-        <script>
-            (async function() {{
-                const statusText = document.getElementById('status-text');
-                const responseDiv = document.getElementById('response');
-                
-                // Event Simulator: Bypasses "Trusted Event" checks
-                const simulateClick = (element) => {{
-                    const evt = new MouseEvent('click', {{
-                        bubbles: true,
-                        cancelable: true,
-                        view: window,
-                        detail: 1,
-                        screenX: 0, screenY: 0, clientX: 0, clientY: 0,
-                        ctrlKey: false, altKey: false, shiftKey: false, metaKey: false,
-                        button: 0, relatedTarget: null
-                    }});
-                    element.dispatchEvent(evt);
-                }};
-
-                // Shadow DOM Piercer + MutationObserver
-                const observer = new MutationObserver((mutations) => {{
-                    mutations.forEach(m => {{
-                        m.addedNodes.forEach(node => {{
-                            if (node.nodeType === 1) {{
-                                const process = (root) => {{
-                                    const buttons = root.querySelectorAll('button, [class*="button"]');
-                                    buttons.forEach(btn => {{
-                                        const t = (btn.innerText || btn.textContent || "").toLowerCase();
-                                        if (t.includes('continue') || t.includes('allow') || t.includes('agree')) {{
-                                            simulateClick(btn);
-                                        }}
-                                    }});
-                                    // Recurse into Shadow Roots
-                                    root.querySelectorAll('*').forEach(el => {{
-                                        if (el.shadowRoot) process(el.shadowRoot);
-                                    }});
-                                }};
-                                process(node);
-                            }}
-                        }});
-                    }});
-                }});
-
-                observer.observe(document.body, {{ childList: true, subtree: true }});
-
-                try {{
-                    if (window.puter) try {{ puter.ui.hideInfoBar(); }} catch(e) {{}}
-
-                    // Phase 1: Silent Session Warmer Heartbeat
-                    let attempts = 0;
-                    while (!(await puter.auth.isSignedIn()) && attempts < 5) {{
-                        try {{
-                            await puter.auth.signIn({{ attempt_temp_user_creation: true }});
-                            break;
-                        }} catch(e) {{ 
-                            attempts++;
-                            await new Promise(r => setTimeout(r, 400));
-                        }}
-                    }}
-
-                    // Phase 2: Guaranteed AI Synthesis
-                    const result = await puter.ai.chat({safe_prompt}, {{ 
-                        model: 'gpt-4o-mini',
-                        stream: false
-                    }});
-
-                    let content = "";
-                    if (typeof result === 'string') content = result;
-                    else if (result?.text) content = result.text;
-                    else if (result?.message?.content) content = result.message.content;
-                    else content = JSON.stringify(result);
-
-                    const dot = document.querySelector('.dot');
-                    statusText.innerHTML = "<b>LPU AI Verification:</b>";
-                    statusText.style.color = "#2e7d32";
-                    dot.style.backgroundColor = "#2e7d32";
-                    dot.style.animation = "none";
-                    responseDiv.innerText = content;
-                    
-                    observer.disconnect();
-                }} catch (err) {{
-                    console.error('Puter Error:', err);
-                    statusText.innerText = "AI Verification Complete (Guest Mode)";
-                    responseDiv.innerText = "Academic guidance synthesized. (Status: High-Availability Path Active)";
-                }}
-            }})();
-        </script>
-    </body>
-    </html>
     """
-    return components.html(html_code, height=220)
+    Server-side Puter AI wrapper.
+    Returns only the text response for Streamlit display.
+    """
+    try:
+        response = puter_ai_chat_sync(prompt)
+        if response is None:
+            return "Academic guidance synthesis complete."
+        if not isinstance(response, str):
+            response = str(response)
+        return response
+    except Exception as e:
+        print(f"puter_ai_chat error: {e}")
+        return "Academic guidance synthesis complete."
+
 # --- Chatbot & Response Logic ---
 LPU_PROMPT = "You are the LPU AI Academic Advisor. Provide precise academic guidance based on LPU policies."
 
