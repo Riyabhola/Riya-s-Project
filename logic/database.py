@@ -86,23 +86,27 @@ def init_online_db():
         db = SessionLocal()
         try:
             # Seed Policies
-            if db.query(Policy).count() == 0:
+            if db.query(Policy).count() < 5: 
                 if os.path.exists("data/policies.csv"):
-                    print("Seeding policies to Aiven PostgreSQL...")
+                    print("Seeding/Updating policies in Aiven PostgreSQL...")
                     df = pd.read_csv("data/policies.csv")
                     for _, row in df.iterrows():
-                        policy = Policy(policy_id=row['policy_id'], title=row['title'], content=row['content'])
-                        db.add(policy)
+                        policy = db.query(Policy).filter_by(policy_id=row['policy_id']).first()
+                        if not policy:
+                            policy = Policy(policy_id=row['policy_id'], title=row['title'], content=row['content'])
+                            db.add(policy)
                     db.commit()
 
             # Seed Courses
-            if db.query(Course).count() == 0:
+            if db.query(Course).count() < 10:
                 if os.path.exists("data/courses.csv"):
-                    print("Seeding courses to Aiven PostgreSQL...")
+                    print("Seeding/Updating courses in Aiven PostgreSQL...")
                     df = pd.read_csv("data/courses.csv")
                     for _, row in df.iterrows():
-                        course = Course(course_id=row['course_id'], name=row['name'], credits=row['credits'], description=row['description'])
-                        db.add(course)
+                        course = db.query(Course).filter_by(course_id=row['course_id']).first()
+                        if not course:
+                            course = Course(course_id=row['course_id'], name=row['name'], credits=row['credits'], description=row['description'])
+                            db.add(course)
                     db.commit()
         finally:
             db.close()
@@ -149,18 +153,38 @@ def book_appointment(student_id, advisor_id, date_time):
         db.close()
 
 def query_courses(query_text, n_results=3):
-    """Searches courses in Aiven PostgreSQL using basic keyword matching."""
+    """Searches courses in Aiven PostgreSQL using weighted keyword matching and stop-word filtering."""
     db = SessionLocal()
     try:
-        # Professional keyword-based search on Aiven
-        words = query_text.lower().split()
+        # 1. Stop-word filtering for academic context
+        stop_words = {"tell", "me", "related", "to", "courses", "find", "recommend", "suggest", "about", "show", "list", "give"}
+        words = [w.lower() for w in query_text.lower().split() if w.lower() not in stop_words and len(w) > 2]
+        
+        if not words:
+            return []
+
         results = db.query(Course).all()
         scored_results = []
         for c in results:
-            score = sum(1 for w in words if w in c.name.lower() or w in c.description.lower())
+            score = 0
+            name_lower = c.name.lower()
+            desc_lower = c.description.lower()
+            
+            for w in words:
+                # Weighting: Exact matches in name are highly significant
+                if w in name_lower:
+                    score += 5
+                # Exact matches in description are significant
+                if w in desc_lower:
+                    score += 2
+                # Partial matches (handle plural/singular)
+                if w[:-1] in name_lower and len(w) > 4:
+                    score += 1
+
             if score > 0:
                 scored_results.append((score, c))
         
+        # Sort by score descending
         scored_results.sort(key=lambda x: x[0], reverse=True)
         top_recs = [r[1] for r in scored_results[:n_results]]
         
