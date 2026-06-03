@@ -243,7 +243,7 @@ def puter_ai_chat(prompt):
                     try {{
                         if (!(await puter.auth.isSignedIn())) {{
                             puter.auth.signIn({{ attempt_temp_user_creation: true }}).catch(() => {{}});
-                        }
+                        }}
                     }} catch(e) {{}}
 
                     // Main AI synthesis
