@@ -1,65 +1,53 @@
-# 🎓 Academic Advising AI Chatbot
+# 🎓 LPU AI Academic Advisor (Puter Edition)
 
-![Python CI](https://github.com/<your-username>/academic-advising-chatbot/actions/workflows/ci.yml/badge.svg)
-![License](https://img.shields.io/github/license/<your-username>/academic-advising-chatbot)
+[![CI Status](https://github.com/Riyabhola/Riya-s-Project/actions/workflows/ci.yml/badge.svg)](https://github.com/Riyabhola/Riya-s-Project/actions/workflows/ci.yml)
+[![Live App](https://img.shields.io/badge/Streamlit-Live%20App-red?logo=streamlit)](https://riyabot.streamlit.app/)
+[![License](https://img.shields.io/github/license/Riyabhola/Riya-s-Project)](LICENSE)
 
-An AI-powered academic advising system built with **Streamlit**, **ChromaDB (RAG)**, and **TextBlob**. This system provides course recommendations, academic policy guidance, and automated appointment scheduling.
+A high-performance, **100% automated** AI Academic Advisor for Lovely Professional University. Featuring an innovative **Shadow Proxy** integration for seamless, zero-interaction Puter AI synthesis.
 
-## 🚀 Features
-- **Intelligent Chatbot:** Detects student intents and provides context-aware responses.
-- **RAG Knowledge Base:** Semantic search on university policies using ChromaDB.
-- **Course Recommendations:** Personalized suggestions based on department and interest.
-- **Appointment Booking:** Simulated integration with advisor scheduling.
-- **Analytics Dashboard:** Real-time tracking of student sentiment and interaction trends.
+## 🚀 Key Innovations
+- **Seamless Puter AI Bypass:** Implements a sophisticated "Shadow Proxy" approach using **MutationObservers** and visibility-safe automation to eliminate user login prompts.
+- **Keyless AI Synthesis:** Leverages Puter.js v2 for GPT-4o Mini synthesis without requiring manual API key management from the end-user.
+- **Enterprise RAG Engine:** Semantic search powered by **Aiven PostgreSQL** (Online DB) for authoritative LPU policy and course guidance.
+- **Real-time Analytics:** Advanced student sentiment tracking and interaction heatmaps using Plotly and TextBlob.
 
 ## 🛠️ Tech Stack
-- **Frontend:** Streamlit
-- **Vector DB:** ChromaDB (Sentence Transformers)
-- **Sentiment Analysis:** TextBlob
-- **Data Visualization:** Plotly
-- **Database:** SQLite
+- **Frontend:** Streamlit (Custom LPU Branding)
+- **AI Engine:** Puter.js v2 (Automated GPT-4o Mini)
+- **Database:** Aiven PostgreSQL (Online-only persistence)
+- **Analytics:** Pandas, Plotly Express
+- **Sentiment:** TextBlob (Linguistic NLP)
 
-## 📦 Installation & Setup
+## 📦 Architecture Highlights
+- **Zero Local Data:** Mandated online persistence to prevent local storage dependency in production environments.
+- **Stealth UX:** Aggressive CSS and JavaScript injection to provide a white-labeled, professional advising experience.
+- **Auto-Sync:** Fully integrated GitHub Actions CI/CD for instant deployment to Streamlit Cloud.
 
-1. **Clone the repository:**
+## 🧪 Quick Start & Testing
+
+1. **Clone & Install:**
    ```bash
-   git clone https://github.com/<your-username>/academic-advising-chatbot.git
-   cd academic-advising-chatbot
-   ```
-
-2. **Create a virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
+   git clone https://github.com/Riyabhola/Riya-s-Project.git
    pip install -r requirements.txt
    ```
 
-4. **Run the application:**
+2. **Environment Configuration:**
+   Create a `.env` file with your `DATABASE_URL` (Aiven PostgreSQL).
+
+3. **Verify Integrity:**
+   Run the comprehensive E2E verification suite:
+   ```bash
+   python verification_suite.py
+   ```
+
+4. **Launch Hub:**
    ```bash
    streamlit run app.py
    ```
 
-## 🧪 Testing
-To run the standard verification suite (Bare Mode):
-```bash
-python verification_suite.py
-```
+## 📜 Project Mandates
+Detailed architectural guidelines and AI integration strategies are documented in [PUTER_ADVISOR.md](PUTER_ADVISOR.md).
 
-## 📊 Sample Data
-The application automatically seeds the knowledge base from `data/` on the first run.
-
-## 🤝 Contributing
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## 📜 License
-This project is licensed under the [MIT License](LICENSE).
-
-## 🌐 Deployment (Streamlit Cloud)
-1. Push this repository to GitHub.
-2. Connect your GitHub account to [Streamlit Cloud](https://streamlit.io/cloud).
-3. Select this repository and the `app.py` file.
-4. Click **Deploy**.
+---
+*Built with ❤️ for the LPU Student Community.*
