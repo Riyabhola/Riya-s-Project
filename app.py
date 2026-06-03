@@ -34,7 +34,25 @@ def main():
         st.rerun()
 
     st.sidebar.markdown("---")
-    # ... (Rest of sidebar examples)
+    st.sidebar.subheader("Common Inquiries:")
+    examples = [
+        "What is the LPU attendance policy?",
+        "tell me fee structure of MCA at lpu",
+        "How do scholarships work at LPU?",
+        "Book a session with an LPU advisor"
+    ]
+    for ex in examples:
+        if st.sidebar.button(ex):
+            st.session_state.messages.append({"role": "user", "content": ex})
+            response, intent, sentiment = handle_query(st.session_state.user_id, ex)
+            
+            # If fallback triggered, try Puter synthesis
+            if "FALLBACK" in response or "SEARCH_FAILURE" in response:
+                 st.info("Synthesizing professional LPU advice via Puter AI...")
+                 puter_ai_chat(f"As an LPU Academic Advisor, answer: {ex}")
+            
+            st.session_state.messages.append({"role": "assistant", "content": response})
+            st.rerun()
 
     if page == "💬 LPU Chatbot":
         show_chat()
@@ -57,16 +75,13 @@ def show_chat():
             st.markdown(prompt)
 
         with st.chat_message("assistant"):
-            # 1. Get initial response (includes intent and context-retrieval)
+            # 1. Get initial response
             response, intent, sentiment = handle_query(st.session_state.user_id, prompt)
             
-            # 2. Check if we should use Puter.js for 'Peak' synthesis (Seamless bypass)
-            if "I'm sorry, I couldn't find" in response or len(response) < 100:
-                 # If response is a fallback, trigger Puter.js bridge
+            # 2. Seamless LLM Synthesis (if backend fails/not configured)
+            if "FALLBACK" in response or "SEARCH_FAILURE" in response or len(response) < 50:
                  st.info("Synthesizing professional LPU advice via Puter AI...")
-                 # Note: In a real app, this would be more tightly integrated.
-                 # For now, we show the bridge component.
-                 puter_ai_chat(f"As an LPU Academic Advisor, answer: {prompt}")
+                 puter_ai_chat(f"As an LPU Academic Advisor, answer based on university context: {prompt}")
             
             st.markdown(response)
             

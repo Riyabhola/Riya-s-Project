@@ -112,7 +112,7 @@ def detect_intent_mock(text):
         return "get_course_recommendation", {}
 
     # 3. Policy Queries (Expanded)
-    elif any(k in text for k in ["policy", "rule", "requirement", "grading", "scale", "probation", "credit", "hours", "graduate", "attendance", "scholarship", "ums", "placement", "exam", "test", "backlog", "re-appear"]):
+    elif any(k in text for k in ["policy", "rule", "requirement", "grading", "scale", "probation", "credit", "hours", "graduate", "attendance", "scholarship", "ums", "placement", "exam", "test", "backlog", "re-appear", "fee", "cost", "mca", "btech", "admission"]):
         return "query_policy", {}
     
     # 4. Appointments
@@ -172,7 +172,10 @@ def handle_query(user_id, query_text):
         if intent == "small_talk":
             response = "As an AI Academic Advisor for LPU, my interests lie in helping you succeed! I'm passionate about university policies, course planning, and making your academic journey at Lovely Professional University smoother."
         elif intent == "query_policy":
-            response = context if context else "I'm sorry, I couldn't find any specific LPU policy regarding that."
+            if context and "I'm sorry, I couldn't find" not in context:
+                response = context
+            else:
+                response = "SEARCH_FAILURE: Could not find specific LPU policy details."
         elif intent == "get_course_recommendation":
             response = get_course_recommendations(query_text)
         elif intent == "book_appointment":
@@ -180,9 +183,9 @@ def handle_query(user_id, query_text):
             book_appointment(user_id, "LPU Faculty Advisor", date_time)
             response = f"I've scheduled an appointment for you with an LPU Faculty Advisor on {date_time}. Please check your LPU UMS email for the confirmation link."
         elif intent == "greeting":
-            response = "Hello! I'm your LPU AI Academic Advisor. How can I assist you with your LPU academic planning or university policy queries today?"
+            response = "Hello! I'm your LPU AI Academic Advisor. How can I assist you today?"
         else:
-            response = "I am your LPU academic advisor. You can ask me about university-specific course recommendations, LPU academic policies (like attendance or grading), or schedule an appointment with a faculty advisor."
+            response = "GENERAL_QUERY_FALLBACK: Please specify your LPU academic inquiry."
 
     # 7. Log Interaction (Handle DB failures gracefully)
     try:
