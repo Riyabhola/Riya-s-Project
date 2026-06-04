@@ -75,7 +75,7 @@ def run_puter_js(prompt: str, model: str = PUTER_JS_MODEL):
             throw new Error('Puter SDK did not initialize correctly');
           }}
 
-          statusNode.innerText = `Using Puter.js model ${modelName} for AI response...`;
+          statusNode.innerText = 'Using Puter.js model ' + modelName + ' for AI response...';
           let response;
           try {{
             response = await window.puter.ai.chat({{
