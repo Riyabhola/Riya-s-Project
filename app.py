@@ -1,6 +1,8 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import os
 import uuid
+import json
 import advisor_logic
 from dotenv import load_dotenv
 
@@ -23,6 +25,50 @@ if "messages" not in st.session_state:
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
 
+
+def run_puter_js(prompt: str):
+    """Render Puter.js in the browser and display the AI response directly in the component."""
+    html = f"""
+    <div id='puter-status' style='font-family: sans-serif; color: #111; padding: 12px;'>Initializing Puter.js...</div>
+    <div id='puter-output' style='font-family: sans-serif; color: #222; white-space: pre-wrap; padding: 12px;'></div>
+    <script>
+      async function normalizeResult(result) {{
+        if (result === null || result === undefined) return '';
+        if (typeof result === 'object') {{
+          return result.text || result.message || JSON.stringify(result, null, 2);
+        }}
+        return result.toString();
+      }}
+      async function runPuter() {{
+        const outputNode = document.getElementById('puter-output');
+        const statusNode = document.getElementById('puter-status');
+        try {{
+          statusNode.innerText = 'Loading Puter.js...';
+          const userPrompt = {json.dumps(prompt)};
+          if (!window.puter || !window.puter.ai || !window.puter.ai.chat) {{
+            await new Promise((resolve, reject) => {{
+              const script = document.createElement('script');
+              script.src = 'https://js.puter.com/v2/';
+              script.onload = () => resolve();
+              script.onerror = () => reject(new Error('Failed to load puter.js'));
+              document.head.appendChild(script);
+            }});
+          }}
+          statusNode.innerText = 'Using Puter.js for AI response...';
+          const response = await window.puter.ai.chat(userPrompt);
+          const normalized = await normalizeResult(response);
+          statusNode.innerText = '✅ Free Puter.js AI response';
+          outputNode.innerText = normalized || 'No response received from Puter.js.';
+        }} catch (error) {{
+          statusNode.innerText = '⚠️ Puter.js error';
+          outputNode.innerText = 'PUTERJS_ERROR: ' + (error?.message || error?.toString() || 'Unknown error');
+        }}
+      }}
+      runPuter();
+    </script>
+    """
+    return components.html(html, height=360, scrolling=True)
+
 def main():
     st.sidebar.title("🦁 LPU Advisor Hub")
     st.sidebar.info("Dedicated AI Advisor for Lovely Professional University students.")
@@ -38,7 +84,10 @@ def main():
     examples = ["Attendance policy", "Scholarships", "Fashion courses", "Book appointment"]
     for ex in examples:
         if st.sidebar.button(ex):
-            process_message(ex)
+            st.session_state.messages.append({"role": "user", "content": ex})
+            res, intent, sentiment = advisor_logic.handle_query(st.session_state.user_id, ex)
+            st.session_state.messages.append({"role": "assistant", "content": res, "use_puter": False, "puter_prompt": ""})
+            st.rerun()
 
     if page == "💬 LPU Chatbot":
         show_chat()
@@ -58,8 +107,6 @@ def show_chat():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
-            if message.get("use_puter"):
-                advisor_logic.puter_ai_chat(message.get("puter_prompt", ""))
 
     # Input
     if prompt := st.chat_input("How can I help you?"):
@@ -74,17 +121,21 @@ def show_chat():
             use_puter = False
             p_prompt = ""
             # If the initial response is too short or no policy found, enhance with AI
-            if isinstance(res, str) and (len(res) < 50 or "No policy" in res or "No matching" in res):
+            should_use_puter = isinstance(res, str) and (
+                len(res) < 50 or
+                "No policy" in res or
+                "No matching" in res or
+                (intent == "identity" and any(term in prompt.lower() for term in ["where", "were you", "location", "been"]))
+            )
+            if should_use_puter:
                 use_puter = True
                 p_prompt = f"As an LPU Advisor, answer this query using university context: {prompt}"
-                # Get the enhanced response from AI - completely automated, no UI popups
-                enhanced_res = advisor_logic.puter_ai_chat(p_prompt)
-                if isinstance(enhanced_res, str) and len(enhanced_res) > 20:
-                    res = enhanced_res  # Use the AI-enhanced response
-                elif enhanced_res is not None:
-                    res = str(enhanced_res)
+                st.markdown("**Using free Puter.js AI for enhanced response below.**")
+                run_puter_js(p_prompt)
+                res = "(Puter.js response is rendered below in the browser component.)"
+            else:
+                st.markdown(res)
             
-            st.markdown(res)
             st.session_state.messages.append({"role": "assistant", "content": res, "use_puter": use_puter, "puter_prompt": p_prompt})
 
 def show_dashboard():

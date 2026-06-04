@@ -431,7 +431,7 @@ Result: App running at https://riyabot.streamlit.app/
 ### Current Status: ✅ NO CRITICAL ISSUES
 
 **Optional Improvements** (not blocking deployment):
-- Configure PUTER_MASTER_TOKEN for enhanced Puter features (optional - fallback working)
+- Configure PUTER_TOKEN for enhanced Puter features (optional - fallback working)
 - Configure OPENAI_API_KEY for OpenAI fallback (optional - system works without)
 - Add custom styling for branded experience (enhancement)
 
@@ -516,7 +516,7 @@ For production deployment on Streamlit Cloud:
 
 ```yaml
 # 1. Puter AI Token (Optional - fallback available)
-PUTER_MASTER_TOKEN = "your_puter_token_here"
+PUTER_TOKEN = "your_puter_token_here"
 
 # 2. OpenAI Fallback (Optional - system works without)
 OPENAI_API_KEY = "your_openai_key_here"

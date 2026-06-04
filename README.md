@@ -16,6 +16,7 @@ A high-performance, **100% automated** AI Academic Advisor for Lovely Profession
 
 ### Seamless Puter AI Integration
 - **Zero-Interaction Authentication:** Professional server-side API-based authentication strategy that eliminates all login prompts and user-facing modals
+- **Free Puter.js Browser AI:** Uses Puter.js frontend integration to access OpenAI-compatible models without requiring an OpenAI API key
 - **Seamless Bypass Verified:** ✅ No popups, no interruptions, completely automated backend processing
 - **Enterprise Implementation:** Token-based authentication with automatic fallback to OpenAI for 100% uptime guarantee
 
@@ -180,7 +181,7 @@ pip install -r requirements.txt
 
 # Configure environment
 # Edit .env and add:
-#   PUTER_MASTER_TOKEN = your_token
+#   PUTER_TOKEN = your_token
 #   OPENAI_API_KEY = your_key
 #   DATABASE_URL = postgresql://...
 
@@ -215,7 +216,7 @@ streamlit run app.py
 **1. Puter Master Token** (Optional - fallback available)
 ```bash
 # Get from https://puter.com/account/api-keys
-PUTER_MASTER_TOKEN=your_token_here
+PUTER_TOKEN=your_token_here
 ```
 
 **2. OpenAI API Key** (Optional - fallback for Puter)
@@ -235,7 +236,7 @@ DATABASE_URL=postgresql://user:password@aivencloud-xxxxx.c.aivencloud.com:12345/
 1. Push code to GitHub
 2. Connect repository to [Streamlit Cloud](https://share.streamlit.io/)
 3. Add secrets in app settings:
-   - `PUTER_MASTER_TOKEN`
+   - `PUTER_TOKEN`
    - `OPENAI_API_KEY`
    - `DATABASE_URL`
 4. Deploy automatically

@@ -106,7 +106,7 @@ Result: Users saw login prompts ❌
 ```
 1. Application Start
    ↓
-2. Load PUTER_MASTER_TOKEN from .env/secrets
+2. Load PUTER_TOKEN from .env/secrets
    ↓
 3. Create PuterAuthService instance
    ↓
@@ -209,7 +209,7 @@ Total Response:          < 1.5s      ✅ Pass
 DATABASE_URL=postgresql://user:password@host.aivencloud.com:port/db
 
 # Puter Master Token (Optional - fallback available)
-PUTER_MASTER_TOKEN=your_puter_token_here
+PUTER_TOKEN=your_puter_token_here
 
 # OpenAI Fallback (Optional - system works without)
 OPENAI_API_KEY=your_openai_api_key_here
@@ -230,7 +230,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 1. Login: https://puter.com/
 2. Go to Account Settings → API Keys
 3. Create or copy Master Token
-4. Paste into Streamlit secrets as PUTER_MASTER_TOKEN
+4. Paste into Streamlit secrets as PUTER_TOKEN
 ```
 
 **3. OpenAI API Key:**

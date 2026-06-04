@@ -426,7 +426,7 @@ pip install -r requirements.txt
 
 # 2. Create .env file with credentials
 # Example .env content:
-PUTER_MASTER_TOKEN=your_puter_token
+PUTER_TOKEN=your_puter_token
 OPENAI_API_KEY=your_openai_key
 DATABASE_URL=postgresql://user:password@host:port/db
 
@@ -478,7 +478,7 @@ streamlit run app.py
 
 - ✅ Code pushed to GitHub
 - ✅ Repository connected to Streamlit Cloud
-- ✅ Secrets configured (PUTER_MASTER_TOKEN, OPENAI_API_KEY, DATABASE_URL)
+- ✅ Secrets configured (PUTER_TOKEN, OPENAI_API_KEY, DATABASE_URL)
 - ✅ App deployed and running
 - ✅ All tests passing in production
 - ✅ Monitoring configured
@@ -535,7 +535,7 @@ streamlit run app.py
 4. Settings → Secrets
 5. Add your credentials as environment variables:
    ```
-   PUTER_MASTER_TOKEN="your_token"
+   PUTER_TOKEN="your_token"
    OPENAI_API_KEY="your_key"
    DATABASE_URL="your_url"
    ```
@@ -547,10 +547,10 @@ streamlit run app.py
 
 | Issue | Solution |
 |-------|----------|
-| No responses | Check PUTER_MASTER_TOKEN and OPENAI_API_KEY in .env |
+| No responses | Check PUTER_TOKEN and OPENAI_API_KEY in .env |
 | Still seeing popups | Restart Streamlit, verify updated code is running |
 | Slow responses | Normal for first request; check internet connection |
-| Getting only fallback responses | PUTER_MASTER_TOKEN invalid; refresh from puter.com |
+| Getting only fallback responses | PUTER_TOKEN invalid; refresh from puter.com |
 
 ---
 

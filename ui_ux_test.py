@@ -66,9 +66,9 @@ except Exception as e:
 print("\n🤖 Test 4: Verify Puter AI Integration")
 print("-" * 80)
 try:
-    from puter_auth_service import puter_ai_chat_sync, get_auth_service
+    from puter_auth_service import puter_ai_chat_sync, get_quantum_bridge
     
-    service = get_auth_service()
+    service = get_quantum_bridge()
     print("✓ Puter auth service initialized")
     
     # Test AI response
@@ -170,7 +170,7 @@ print("1. Go to https://share.streamlit.io")
 print("2. Find your app (riyabot.streamlit.app)")
 print("3. Click Settings → Secrets")
 print("4. Add environment variables:")
-print("   - PUTER_MASTER_TOKEN")
+print("   - PUTER_TOKEN")
 print("   - OPENAI_API_KEY")
 print("   - DATABASE_URL")
 print("5. Click 'Reboot app'")

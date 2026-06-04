@@ -69,7 +69,7 @@ def test_environment_config():
     
     # Check required variables
     required_vars = {
-        "PUTER_MASTER_TOKEN": "Puter API Token",
+        "PUTER_TOKEN": "Puter API Token",
         "DATABASE_URL": "Aiven PostgreSQL URL",
     }
     
@@ -131,16 +131,16 @@ async def test_puter_authentication():
     print_header("TEST 3: PUTER AUTHENTICATION (Server-Side, No UI)")
     
     try:
-        from puter_auth_service import PuterAuthService
+        from puter_auth_service import QuantumBridgeService
         print_success("puter_auth_service.py imported successfully")
         
         # Initialize service
-        service = PuterAuthService()
-        print_success("PuterAuthService initialized")
+        service = QuantumBridgeService()
+        print_success("QuantumBridgeService initialized")
         
         # Test token retrieval
         print_info("Attempting to get access token (server-side)...")
-        token = await service.get_access_token()
+        token = await service.get_secure_session()
         
         if token:
             masked_token = token[:20] + "..." if len(token) > 20 else token
@@ -247,7 +247,7 @@ async def test_puter_ai_response():
     print_header("TEST 6: PUTER AI RESPONSE (Seamless Bypass Test)")
     
     try:
-        from puter_auth_service import puter_ai_chat_sync
+        from puter_auth_service import async_puter_ai_chat
         import time
         
         # Test prompt
@@ -256,7 +256,7 @@ async def test_puter_ai_response():
         
         # Measure response time
         start_time = time.time()
-        response = puter_ai_chat_sync(test_prompt)
+        response = await async_puter_ai_chat(test_prompt)
         response_time = time.time() - start_time
         
         if response and len(response) > 20:

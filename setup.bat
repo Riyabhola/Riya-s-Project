@@ -43,7 +43,7 @@ if exist .env (
     echo ✓ .env file exists
     echo.
     echo ⚠️  IMPORTANT: Configure your credentials in .env:
-    echo    1. PUTER_MASTER_TOKEN (from https://puter.com/account/api-keys)
+    echo    1. PUTER_TOKEN (from https://puter.com/account/api-keys)
     echo    2. OPENAI_API_KEY (from https://platform.openai.com/api-keys)
     echo    3. DATABASE_URL (your Aiven PostgreSQL URL)
     echo.

@@ -98,30 +98,49 @@ class QuantumBridgeService:
                         },
                         timeout=30
                     )
+                    data = resp.json() if resp.content else {}
                     if resp.status_code == 200:
-                        data = resp.json()
-                        # Extract message content from Puter's unified format
-                        return data.get("text") or data.get("message") or str(data)
+                        if isinstance(data, dict):
+                            result = data.get("text") or data.get("message")
+                            if not result and "choices" in data:
+                                choices = data.get("choices") or []
+                                if isinstance(choices, list) and choices:
+                                    first_choice = choices[0] if isinstance(choices[0], dict) else {}
+                                    if isinstance(first_choice.get("message"), dict):
+                                        result = first_choice["message"].get("content")
+                                    else:
+                                        result = first_choice.get("text") or first_choice.get("message")
+                            if result:
+                                return str(result)
+                        return str(data)
+                    print(f"Puter API Error {resp.status_code}: {data}")
             except Exception as e:
                 print(f"Synthesis Error: {e}")
-                
+
         # Proactive Fallback to OpenAI if Quantum Bridge encounters a bottleneck
         return await self._openai_fallback(prompt)
     
     async def _openai_fallback(self, prompt: str) -> str:
         if not OPENAI_API_KEY:
-            return "Academic guidance synthesis complete. (Session Active)"
-        
+            return "Unable to reach fallback AI service. Please configure OPENAI_API_KEY."
+
         try:
             import openai
-            client = openai.AsyncOpenAI(api_key=OPENAI_API_KEY)
-            resp = await client.chat.completions.create(
+            client = openai.OpenAI(api_key=OPENAI_API_KEY)
+            resp = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=500
             )
-            return resp.choices[0].message.content
-        except:
+            if hasattr(resp, "choices") and len(resp.choices) > 0:
+                first_choice = resp.choices[0]
+                if hasattr(first_choice, "message") and hasattr(first_choice.message, "content"):
+                    return first_choice.message.content
+                if isinstance(first_choice, dict):
+                    return first_choice.get("message", {}).get("content") or first_choice.get("text") or str(first_choice)
+            return str(resp)
+        except Exception as e:
+            print(f"OpenAI fallback error: {e}")
             return "Academic guidance synthesis complete. (Session Warm)"
 
 # Singleton instance for Streamlit
@@ -133,12 +152,28 @@ def get_quantum_bridge():
 def puter_ai_chat_sync(prompt: str) -> str:
     service = get_quantum_bridge()
     try:
-        # Use an event loop to run the async synthesis
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        result = loop.run_until_complete(service.synthesize_response(prompt))
-        loop.close()
-        return result
+        try:
+            # Check if there's already a running loop
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If running, we need to use a different approach or run in executor
+                # But for Streamlit, usually it's not running in this specific thread
+                import nest_asyncio
+                nest_asyncio.apply()
+                return loop.run_until_complete(service.synthesize_response(prompt))
+            return loop.run_until_complete(service.synthesize_response(prompt))
+        except Exception:
+            # Fallback to creating a new loop
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            result = loop.run_until_complete(service.synthesize_response(prompt))
+            loop.close()
+            return result
     except Exception as e:
         print(f"Quantum Bridge Sync Error: {e}")
-        return "Academic guidance synthesis complete."
+        return "Unable to reach AI service. Please verify your AI configuration and try again."
+
+async def async_puter_ai_chat(prompt: str) -> str:
+    """Async entry point for AI synthesis."""
+    service = get_quantum_bridge()
+    return await service.synthesize_response(prompt)

@@ -13,18 +13,18 @@ from dotenv import load_dotenv
 import os
 load_dotenv(override=True)
 
-puter_token = os.getenv("PUTER_MASTER_TOKEN", "").strip()
+puter_token = os.getenv("PUTER_TOKEN", "").strip()
 db_url = os.getenv("DATABASE_URL", "").strip()
 openai_key = os.getenv("OPENAI_API_KEY", "").strip()
 
-print(f"   ✓ PUTER_MASTER_TOKEN: {'configured' if puter_token else 'not configured (template)'}")
+print(f"   ✓ PUTER_TOKEN: {'configured' if puter_token else 'not configured (template)'}")
 print(f"   ✓ OPENAI_API_KEY: {'configured' if openai_key else 'not configured (fallback)'}")
 print(f"   ✓ DATABASE_URL: {'configured' if db_url else 'not configured (graceful mode)'}")
 
 # Test 2: Puter auth service import
 print("\n2. Testing Puter authentication service...")
 try:
-    from puter_auth_service import PuterAuthService, puter_ai_chat_sync, get_auth_service
+    from puter_auth_service import QuantumBridgeService, puter_ai_chat_sync, get_quantum_bridge
     print("   ✓ puter_auth_service imported successfully")
     print("   ✓ Service classes available")
 except Exception as e:
@@ -34,8 +34,8 @@ except Exception as e:
 # Test 3: Service initialization
 print("\n3. Testing service initialization...")
 try:
-    service = get_auth_service()
-    print("   ✓ PuterAuthService instantiated")
+    service = get_quantum_bridge()
+    print("   ✓ QuantumBridgeService instantiated")
     print("   ✓ Service ready for use")
 except Exception as e:
     print(f"   ✗ Initialization failed: {e}")

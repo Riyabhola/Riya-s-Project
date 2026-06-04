@@ -35,15 +35,21 @@ The `.env` file has been created. You now need to add your API credentials:
 4. Click **Create Master Token**
 5. Copy the token and paste it in `.env`:
    ```
-   PUTER_MASTER_TOKEN=your_token_here
+   PUTER_TOKEN=your_token_here
    ```
 
-#### **Option B: Using OpenAI (Backup/Fallback)**
+#### **Option B: Use Puter.js for Free OpenAI-Compatible AI in the Browser**
+If you prefer not to require OpenAI credentials, the app also supports a frontend Puter.js integration that can access GPT-style models without an OpenAI API key.
+- No backend OpenAI API key is needed for this mode.
+- Puter.js runs in the browser and provides free access to supported AI models.
+- This is ideal for user-facing, zero-server deployments.
+
+#### **Option C: Using OpenAI (Backup/Fallback)**
 1. Go to https://platform.openai.com/api-keys
 2. Create an API key
 3. Add to `.env`:
    ```
-   OPENAI_API_KEY=your_api_key_here
+   OPENAI_API_KEY=your_openai_api_key_here
    ```
 
 #### **Database Configuration**
@@ -58,7 +64,7 @@ DATABASE_URL=postgresql://user:password@host:port/dbname
 DATABASE_URL=postgresql://user:password@aiven.cloud:26257/lpu_advisor
 
 # Puter Configuration - Server-side Authentication
-PUTER_MASTER_TOKEN=your_puter_master_token_here
+PUTER_TOKEN=your_puter_master_token_here
 OPENAI_API_KEY=your_openai_api_key_here
 
 # Puter AI Configuration
@@ -122,7 +128,7 @@ Response displayed to user (seamless, no interruption)
 ### **Authentication Flow**
 1. App requests response
 2. Service checks cached token
-3. If no token, uses PUTER_MASTER_TOKEN for server-to-server auth
+3. If no token, uses PUTER_TOKEN for server-to-server auth
 4. Gets access token from Puter API
 5. Makes AI request directly (no JavaScript, no UI manipulation)
 6. Returns response or falls back to OpenAI
@@ -146,7 +152,7 @@ git push origin main
 
 ```toml
 [secrets]
-PUTER_MASTER_TOKEN = "your_puter_token"
+PUTER_TOKEN = "your_puter_token"
 OPENAI_API_KEY = "your_openai_key"
 DATABASE_URL = "your_database_url"
 PUTER_AI_MODEL = "gpt-4o-mini"
@@ -200,7 +206,7 @@ Then:
 ## 🛠️ Troubleshooting
 
 ### **Issue: No responses appearing**
-- **Check:** PUTER_MASTER_TOKEN is set correctly
+- **Check:** PUTER_TOKEN is set correctly
 - **Check:** OPENAI_API_KEY is set as fallback
 - **Fix:** Verify tokens in .env or Streamlit Secrets
 
@@ -211,7 +217,7 @@ Then:
 
 ### **Issue: Getting fallback responses only**
 - **Meaning:** Puter auth failed, using OpenAI
-- **Check:** PUTER_MASTER_TOKEN validity
+- **Check:** PUTER_TOKEN validity
 - **Fix:** Get a new token from https://puter.com/account/api-keys
 
 ### **Issue: Still seeing login popup**

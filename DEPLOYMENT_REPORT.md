@@ -26,7 +26,7 @@ The LPU AI Academic Advisor has been successfully deployed to production with al
    Status: PASSED
    Components Verified:
    ✓ .env file present and properly formatted
-   ✓ PUTER_MASTER_TOKEN configuration available
+   ✓ PUTER_TOKEN configuration available
    ✓ OPENAI_API_KEY (fallback) available
    ✓ DATABASE_URL structure validated
    ✓ Environment variable loading functional
@@ -205,7 +205,7 @@ DEPLOYMENT CHECKLIST:
 [ ] 4. Click "Secrets" tab
 [ ] 5. Add the following environment variables:
 
-      PUTER_MASTER_TOKEN=<your_token_from_puter.com>
+      PUTER_TOKEN=<your_token_from_puter.com>
       OPENAI_API_KEY=<your_key_from_platform.openai.com>
       DATABASE_URL=<your_aiven_postgresql_url>
 
@@ -491,7 +491,7 @@ To configure Aiven database for production:
    DATABASE_URL = "postgresql://avnadmin:PASSWORD@pg-xxxxx.c.aivencloud.com:12345/defaultdb"
    
    # Puter AI (Optional - fallback available)
-   PUTER_MASTER_TOKEN = "your_puter_token_here"
+   PUTER_TOKEN = "your_puter_token_here"
    
    # OpenAI Fallback (Optional)
    OPENAI_API_KEY = "your_openai_key_here"
