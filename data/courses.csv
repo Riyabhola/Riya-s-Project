@@ -14,3 +14,8 @@ BI0101,Cell Biology,Biotechnology,4,Fundamental study of cell structure and gene
 CHE110,Engineering Chemistry,Chemistry,3,Applied chemistry for industrial applications,Introductory
 LAW101,Introduction to Indian Law,Law,3,Overview of the Indian legal system and constitution,Introductory
 ARC101,History of Architecture,Architecture,3,Chronological study of architectural styles and civilizations,Introductory
+CSE303,Artificial Intelligence,Computer Science,4,Fundamental concepts of machine learning neural networks and heuristic search,Advanced
+INT304,Web Development,Information Technology,4,Full-stack development using modern frameworks like React and Node.js,Advanced
+MGT201,Human Resource Management,Management,3,Principles of personnel management recruitment and organizational psychology,Intermediate
+CSE401,Cloud Computing,Computer Science,4,Deployment and management of applications on AWS and Azure platforms,Advanced
+INT405,Cyber Security,Information Technology,4,Network security cryptography and ethical hacking techniques,Advanced

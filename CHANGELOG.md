@@ -5,6 +5,8 @@ All notable changes to the **LPU AI Academic Advisor** project will be documente
 ## [1.1.0] - 2026-06-04
 ### Added
 - **Quantum Bridge Architecture:** Implemented a strictly zero-interaction server-side AI synthesis bridge using Puter API.
+- **Puter.js Frontend Integration:** Enabled direct browser access to GPT-5.5, GPT-5.4, and GPT Image without requiring an OpenAI API key.
+- **Expanded Knowledge Base:** Added professional LPU policies (Hostel, Exams, Library, Conduct) and advanced courses (AI, Cloud, Cyber Security) to the Aiven database seeding logic.
 - **Automated Seeding:** Professional data seeding for Aiven PostgreSQL from local CSV sources.
 - **Enhanced E2E Suite:** Comprehensive end-to-end testing suite with 100% pass rate.
 - **Security Templates:** Professional GitHub issue and pull request templates.
@@ -12,7 +14,7 @@ All notable changes to the **LPU AI Academic Advisor** project will be documente
 ### Changed
 - **Unified Configuration:** Standardized environment variable naming to `PUTER_TOKEN`.
 - **Robust Env Loading:** Switched to `load_dotenv(override=True)` for consistent configuration management.
-- **Documentation Overhaul:** Updated README, Architecture, and Setup guides to reflect the "Quantum Edition" status.
+- **Documentation Overhaul:** Updated README, Architecture, and Setup guides to reflect the "Quantum Edition" status and GitHub CI/CD workflows.
 
 ### Fixed
 - **Database Connection:** Resolved line-break issues in `.env` and optimized SSL/TLS connectivity for Aiven.
