@@ -118,7 +118,7 @@ def show_chat():
         # Call client-side custom component loaded with Puter.js
         client_response = puter_client_chat(prompt=p_prompt, key=f"puter_call_{len(st.session_state.messages)}")
         
-        if client_response is None:
+        if not isinstance(client_response, str):
             # Component is running in browser, display loader
             with st.chat_message("assistant"):
                 st.info("🦁 Advisor is searching (Client-Side Puter.js)...")
