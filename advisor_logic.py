@@ -153,10 +153,23 @@ def puter_ai_chat(prompt):
             return "Academic guidance synthesis complete."
         if not isinstance(response, str):
             response = str(response)
-        return response
+        return response.strip()
     except Exception as e:
         print(f"puter_ai_chat error: {e}")
         return "Academic guidance synthesis complete."
+
+def is_ambiguous_query_response(response: str) -> bool:
+    if not isinstance(response, str):
+        return True
+    fallback_markers = [
+        "Academic guidance synthesis complete",
+        "Please specify your LPU academic query",
+        "No matching courses found",
+        "No policy found in online DB",
+        "Database connection error",
+        "Please specify your policy query"
+    ]
+    return any(marker in response for marker in fallback_markers)
 
 # --- Chatbot & Response Logic ---
 LPU_PROMPT = "You are the LPU AI Academic Advisor. Provide precise academic guidance based on LPU policies."
@@ -165,11 +178,16 @@ def handle_query(user_id, query):
     text = query.lower()
     sentiment = TextBlob(query).sentiment.polarity
     intent = "general_inquiry"
-    if any(k in text for k in ["name", "who are you", "yourself"]): intent = "identity"
-    elif any(k in text for k in ["recommend", "course", "suggest", "study"]): intent = "get_course_recommendation"
-    elif any(k in text for k in ["policy", "rule", "grading", "attendance", "scholarship"]): intent = "query_policy"
-    elif any(k in text for k in ["appointment", "schedule", "book"]): intent = "book_appointment"
-    elif any(k in text for k in ["hi", "hello", "hey"]): intent = "greeting"
+    if any(k in text for k in ["name", "who are you", "yourself", "where", "were you", "location", "been"]):
+        intent = "identity"
+    elif any(k in text for k in ["recommend", "course", "suggest", "study"]):
+        intent = "get_course_recommendation"
+    elif any(k in text for k in ["policy", "rule", "grading", "attendance", "scholarship"]):
+        intent = "query_policy"
+    elif any(k in text for k in ["appointment", "schedule", "book"]):
+        intent = "book_appointment"
+    elif any(k in text for k in ["hi", "hello", "hey"]):
+        intent = "greeting"
 
     context, response = None, None
     if intent == "query_policy": context = query_knowledge_base(query)
@@ -178,14 +196,24 @@ def handle_query(user_id, query):
         if recs: context = "RELEVANT COURSES:\n" + "\n".join([f"- {c['name']} ({c['course_id']})" for c in recs])
 
     if not response:
-        if intent == "identity": response = "I am the LPU AI Academic Advisor, dedicated to helping students with university policies and courses."
-        elif intent == "query_policy": response = context
+        if intent == "identity":
+            response = "I am the LPU AI Academic Advisor, dedicated to helping students with university policies and courses."
+        elif intent == "query_policy":
+            response = context
         elif intent == "get_course_recommendation":
             recs = query_courses(query)
             response = "I recommend these LPU courses:\n" + "\n".join([f"- {c['name']}" for c in recs]) if recs else "No matching courses found."
-        elif intent == "book_appointment": response = "I've scheduled an appointment for you. Please check your UMS email."
-        elif intent == "greeting": response = "Welcome! I'm your LPU Academic Advisor. How can I help?"
-        else: response = "Please specify your LPU academic query."
+        elif intent == "book_appointment":
+            response = "I've scheduled an appointment for you. Please check your UMS email."
+        elif intent == "greeting":
+            response = "Welcome! I'm your LPU Academic Advisor. How can I help?"
+        else:
+            response = "Please specify your LPU academic query."
+
+    if is_ambiguous_query_response(response) and intent in {"general_inquiry", "identity"}:
+        ai_response = puter_ai_chat(f"{LPU_PROMPT} Respond to this student query using LPU context: {query}")
+        if ai_response and not is_ambiguous_query_response(ai_response):
+            response = ai_response
 
     if SessionLocal:
         db = SessionLocal()
