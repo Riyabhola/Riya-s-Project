@@ -1,24 +1,26 @@
+## 🦁 LPU AI Advisor - Pull Request
+
 ## Description
-Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context.
+Provide a clear summary of the changes and the architectural impact.
 
 Fixes # (issue)
 
-## Type of change
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] This change requires a documentation update
+## 🏛️ Architectural Impact
+- [ ] Modifies **Quantum Bridge** (Puter AI integration)
+- [ ] Updates **Aiven PostgreSQL** schema or data seeding
+- [ ] Changes **advisor_logic.py** core synthesis or intent detection
+- [ ] Frontend (Streamlit) UI/UX enhancement
 
-## How Has This Been Tested?
-Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration.
+## 🧪 Verification & Testing
+Describe the tests executed to confirm mandate compliance.
 
-- [ ] Manual Test
-- [ ] CI/CD Accuracy Test
+- [ ] Ran `quick_test.py` (Local verification)
+- [ ] Ran `e2e_test_suite.py` (Full system integration)
+- [ ] Verified **zero login prompt** for Puter AI
+- [ ] Confirmed **Aiven database** connectivity and data integrity
 
-## Checklist:
-- [ ] My code follows the style guidelines of this project
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] Any dependent changes have been merged and published in downstream modules
+## 📋 Checklist:
+- [ ] Code adheres to the project's **professional standards**
+- [ ] Documentation updated (`README.md`, `PUTER_ADVISOR.md`, etc.)
+- [ ] Environment variables unified (using `PUTER_TOKEN`)
+- [ ] Self-review performed and verified against project mandates

@@ -1,20 +1,20 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
+name: 🚀 Feature Request
+about: Suggest a professional enhancement for the LPU AI Advisor
 title: "[FEATURE] "
 labels: enhancement
 assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+**🎯 Problem Statement**
+What specific student or administrative need is not being met?
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**💡 Proposed Solution**
+How should the **Quantum Bridge** or **Aiven** backend be extended?
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**🏛️ Architectural Alignment**
+Does this align with the **zero-interaction** and **high-precision** mandates?
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**Additional Context**
+Add any other context or sketches about the feature request here.
