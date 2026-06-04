@@ -43,6 +43,7 @@ class QuantumBridgeService:
         self.token = PUTER_TOKEN
         self.api_endpoint = PUTER_API_ENDPOINT
         self.session_token = None
+        self.last_error = None
         
     async def get_secure_session(self) -> Optional[str]:
         """
@@ -95,15 +96,19 @@ class QuantumBridgeService:
                             if result:
                                 return str(result)
                         return str(data)
-                    print(f"Puter API Error {resp.status_code}: {data}")
+                    else:
+                        self.last_error = f"Puter API status {resp.status_code}: {data.get('message') or data.get('error') or resp.text}"
+                        print(self.last_error)
             except Exception as e:
-                print(f"Synthesis Error: {e}")
+                self.last_error = f"Puter API exception: {e}"
+                print(self.last_error)
 
         return await self._openai_fallback(prompt)
     
     async def _openai_fallback(self, prompt: str) -> str:
         if not OPENAI_API_KEY:
-            return "Unable to reach fallback AI service. Please configure PUTER_TOKEN or OPENAI_API_KEY in Streamlit Secrets."
+            error_suffix = f" Details: {self.last_error}." if self.last_error else ""
+            return f"Unable to reach Puter AI service.{error_suffix} Please verify your PUTER_TOKEN is configured in Streamlit Secrets."
 
         try:
             import openai
