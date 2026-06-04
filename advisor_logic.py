@@ -181,13 +181,71 @@ def is_ambiguous_query_response(response: str) -> bool:
     ]
     return any(marker in response for marker in fallback_markers)
 
+class AcademicSentimentAnalyzer:
+    """
+    Industry-standard academic sentiment analysis engine.
+    Combines TextBlob base lexicon scores with academic-specific heuristics,
+    negation handling (valence shifting), and critical keyword weights.
+    """
+    @staticmethod
+    def analyze(text: str) -> float:
+        if not text:
+            return 0.0
+        
+        # 1. Base polarity from TextBlob
+        blob = TextBlob(text)
+        score = blob.sentiment.polarity
+        
+        # 2. Tokenize text to check for modifiers
+        import re
+        text_lower = text.lower()
+        words = re.findall(r'\b\w+\b', text_lower)
+        tokens = set(words)
+        
+        # 3. Negations Check (Valence Shifting)
+        negators = {"not", "no", "never", "cannot", "n't", "neither", "nor"}
+        has_negation = any(neg in tokens for neg in negators)
+        
+        # 4. Academic-specific critical words
+        critical_negative = {
+            "fail", "failing", "failed", "detain", "detained", "detention",
+            "plagiarism", "plagiarize", "cheat", "cheating", "depressed",
+            "anxious", "stress", "stressed", "unhappy", "frustrated",
+            "worst", "poor", "difficult", "struggle", "struggling", "dropout",
+            "drop", "disappointed", "complaint", "complain", "error", "broken"
+        }
+        critical_positive = {
+            "succeed", "success", "excel", "scholarship", "clear", "cleared",
+            "pass", "passed", "happy", "great", "excellent", "good", "perfect",
+            "love", "helpful", "thanks", "thank", "appreciate", "smooth"
+        }
+        
+        # Adjust score based on key academic markers
+        neg_matches = sum(1 for w in words if w in critical_negative)
+        pos_matches = sum(1 for w in words if w in critical_positive)
+        
+        if neg_matches > 0:
+            score -= 0.25 * neg_matches
+        if pos_matches > 0:
+            score += 0.15 * pos_matches
+            
+        # Adjust for negation (e.g., "not good" -> shift negative)
+        if has_negation:
+            if score > 0:
+                score = -score * 0.8
+            else:
+                score = abs(score) * 0.5 if score < 0 else 0.1
+                
+        # Limit boundary to [-1.0, 1.0]
+        return max(-1.0, min(1.0, score))
+
 # --- Chatbot & Response Logic ---
 LPU_PROMPT = "You are the LPU AI Academic Advisor. Provide precise academic guidance based on LPU policies."
 
 def handle_query(user_id, query):
     import re
     text = query.lower()
-    sentiment = TextBlob(query).sentiment.polarity
+    sentiment = AcademicSentimentAnalyzer.analyze(query)
     
     # Tokenize text into words for precise keyword matching (avoiding substring bugs like "hi" matching "high")
     words = re.findall(r'\b\w+\b', text)
