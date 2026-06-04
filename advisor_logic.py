@@ -21,21 +21,21 @@ import plotly.express as px
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 # --- Database & Knowledge Base (Aiven PostgreSQL Only) ---
-DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
-if not DATABASE_URL:
-    try:
-        DATABASE_URL = st.secrets.get("DATABASE_URL", "").strip()
-    except Exception:
-        DATABASE_URL = None
+def _clean_str(val, default=""):
+    if val is None:
+        return default
+    return str(val).strip()
 
-DATABASE_URL = DATABASE_URL or None
+try:
+    DATABASE_URL = _clean_str(st.secrets.get("DATABASE_URL", os.environ.get("DATABASE_URL", "")))
+except Exception:
+    DATABASE_URL = _clean_str(os.environ.get("DATABASE_URL", ""))
 
-# Validate and normalize DATABASE_URL
 if DATABASE_URL:
     if DATABASE_URL.startswith("postgres://"):
         DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 else:
-    DATABASE_URL = None  # Explicitly set to None if empty
+    DATABASE_URL = None
 
 Base = declarative_base()
 
