@@ -7,57 +7,66 @@
   <script src="https://cdn.jsdelivr.net/gh/streamlit/component-lib@v1.0.0/streamlit-component-lib.js"></script>
   <!-- Load Puter.js library -->
   <script src="https://js.puter.com/v2/"></script>
+</head>
+<body style="margin: 0; padding: 0; background: transparent; overflow: hidden;">
   <script>
     let hasSent = false;
     
-    // Register the Streamlit Render Event
-    Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, function(event) {
+    // Define initialization function
+    function initializeComponent() {
+      if (!window.Streamlit) {
+        // Retry in 50ms if Streamlit is not loaded yet
+        setTimeout(initializeComponent, 50);
+        return;
+      }
+      
       // Set iframe height to 0 to make it invisible
       Streamlit.setFrameHeight(0);
       
-      const prompt = event.detail.args.prompt;
-      const model = event.detail.args.model || "gpt-5.5";
-      const puterToken = event.detail.args.puter_token;
-      
-      if (puterToken) {
-        // Programmatically bypass Puter.js user login popup using the developer's PUTER_TOKEN
-        try {
-          localStorage.setItem("puter-auth-token", puterToken);
-          localStorage.setItem("puter.auth.token", puterToken);
-          localStorage.setItem("puter_auth_token", puterToken);
-          localStorage.setItem("auth_token", puterToken);
-          
-          // Also set on the global puter object if initialized
-          if (window.puter) {
-            if (!puter.auth) puter.auth = {};
-            puter.authToken = puterToken;
-            puter.auth.token = puterToken;
-            puter.auth.authToken = puterToken;
+      // Register the Streamlit Render Event
+      Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, function(event) {
+        const prompt = event.detail.args.prompt;
+        const model = event.detail.args.model || "gpt-5.5";
+        const puterToken = event.detail.args.puter_token;
+        
+        if (puterToken) {
+          try {
+            localStorage.setItem("puter-auth-token", puterToken);
+            localStorage.setItem("puter.auth.token", puterToken);
+            localStorage.setItem("puter_auth_token", puterToken);
+            localStorage.setItem("auth_token", puterToken);
+            
+            if (window.puter) {
+              if (!puter.auth) puter.auth = {};
+              puter.authToken = puterToken;
+              puter.auth.token = puterToken;
+              puter.auth.authToken = puterToken;
+            }
+          } catch (e) {
+            console.error("Failed to set Puter auth tokens:", e);
           }
-        } catch (e) {
-          console.error("Failed to set Puter auth tokens:", e);
         }
-      }
+        
+        if (prompt && !hasSent) {
+          hasSent = true;
+          // Make the frontend call directly using Puter.js in the browser!
+          puter.ai.chat(prompt, { model: model })
+            .then(function(response) {
+              const textResponse = response.text || response.message || response.toString();
+              Streamlit.setComponentValue(textResponse);
+            })
+            .catch(function(error) {
+              Streamlit.setComponentValue("Error from Puter.js: " + error.toString());
+            });
+        }
+      });
       
-      if (prompt && !hasSent) {
-        hasSent = true;
-        // Make the frontend call directly using Puter.js in the browser!
-        puter.ai.chat(prompt, { model: model })
-          .then(function(response) {
-            // Pass the string response back to Streamlit Python backend
-            const textResponse = response.text || response.message || response.toString();
-            Streamlit.setComponentValue(textResponse);
-          })
-          .catch(function(error) {
-            Streamlit.setComponentValue("Error from Puter.js: " + error.toString());
-          });
-      }
-    });
+      // Signal to Streamlit that the component is loaded and ready
+      Streamlit.setComponentReady();
+    }
     
-    // Signal to Streamlit that the component is loaded and ready
-    Streamlit.setComponentReady();
+    // Run initialization on load
+    window.addEventListener('load', initializeComponent);
   </script>
-</head>
-<body style="margin: 0; padding: 0; background: transparent; overflow: hidden;">
 </body>
 </html>
