@@ -321,6 +321,20 @@ status: STRING - Scheduled/Completed/Cancelled
 
 ---
 
+## 🌐 GitHub Integration & CI/CD
+
+### Professional Development Workflow
+- **Automated Deployment:** Every push to the `master` branch triggers a seamless redeployment to **Streamlit Cloud**, ensuring the live advisor is always up-to-date.
+- **Continuous Verification:** Automated tests (E2E, UI/UX, and Functional) are integrated into the development lifecycle to maintain a 100% pass rate.
+- **Collaborative Standards:** Utilizing **Issue Templates** for bug reports and feature requests, and a **Pull Request Template** to ensure consistent code quality.
+
+### Repository Infrastructure
+- **Branch Strategy:** `master` for production-ready code, with feature branches used for development.
+- **GitHub Actions:** Integrated workflows for linting and basic CI checks (see `.github/workflows/`).
+- **Security:** Dependabot is active to monitor and update dependency vulnerabilities automatically.
+
+---
+
 ## 👥 Support & Contributions
 
 ### GitHub Repository
