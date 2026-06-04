@@ -47,43 +47,15 @@ class QuantumBridgeService:
     async def get_secure_session(self) -> Optional[str]:
         """
         Obtains an autonomous session token.
-        Prioritizes PUTER_TOKEN if available, otherwise executes Guest Handshake.
+        Prioritizes PUTER_TOKEN if available.
         """
         if self.session_token:
             return self.session_token
             
         if self.token:
-            # Professional Server-to-Server Auth
-            try:
-                async with httpx.AsyncClient() as client:
-                    resp = await client.post(
-                        f"{self.api_endpoint}/auth/obtain-token",
-                        headers={"Authorization": f"Bearer {self.token}"},
-                        json={"token_type": "access"},
-                        timeout=10
-                    )
-                    if resp.status_code == 200:
-                        data = resp.json()
-                        self.session_token = data.get("access_token") or data.get("token")
-                        return self.session_token
-            except Exception as e:
-                print(f"Auth Handshake Error: {e}")
-
-        # Fallback to Seamless Guest Handshake (Innovative Bypass)
-        return await self._execute_guest_handshake()
-    
-    async def _execute_guest_handshake(self) -> Optional[str]:
-        """
-        Executes a zero-credential handshake to obtain a functional AI session.
-        """
-        try:
-            async with httpx.AsyncClient() as client:
-                resp = await client.post(f"{self.api_endpoint}/auth/guest", timeout=10)
-                if resp.status_code == 200:
-                    data = resp.json()
-                    return data.get("token") or data.get("access_token")
-        except Exception as e:
-            print(f"Guest Handshake Error: {e}")
+            self.session_token = self.token
+            return self.session_token
+            
         return None
     
     async def synthesize_response(self, prompt: str) -> str:
@@ -131,7 +103,7 @@ class QuantumBridgeService:
     
     async def _openai_fallback(self, prompt: str) -> str:
         if not OPENAI_API_KEY:
-            return "Puter.js client-side integration is fully operational. Running gpt-4o-mini directly in your browser without requiring server-side API keys."
+            return "Unable to reach fallback AI service. Please configure PUTER_TOKEN or OPENAI_API_KEY in Streamlit Secrets."
 
         try:
             import openai
