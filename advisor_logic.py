@@ -269,7 +269,17 @@ def log_interaction(user_id, query, intent, response, sentiment):
             finally:
                 db.close()
         threading.Thread(target=db_write, daemon=True).start()
-
+def get_analytics_df():
+    if not SessionLocal: return None
+    db = SessionLocal()
+    try:
+        df = pd.read_sql(db.query(Interaction).statement, engine)
+        return df
+    except Exception as e:
+        print(f"Error fetching analytics dataframe: {e}")
+        return None
+    finally:
+        db.close()
 
 def get_analytics_data():
     if not SessionLocal: return None, None, None, None, None

@@ -1,6 +1,8 @@
 import streamlit as st
 import os
 import uuid
+import pandas as pd
+import plotly.express as px
 import advisor_logic
 from dotenv import load_dotenv
 from puter_auth_service import puter_client_chat
@@ -169,40 +171,205 @@ def show_chat():
 
 def show_dashboard():
     st.title("📊 Student Insights Dashboard")
-    st.markdown("Executive overview of AI-student interactions and university academic sentiment.")
+    st.markdown("Academic advisor control panel. Monitor student sentiment, query intents, and Puter AI resolver rates.")
     
-    # Fetch enhanced data
-    data = advisor_logic.get_analytics_data()
-    if data[0] is None:
-        st.warning("Start a conversation to see analytics!")
+    # Fetch raw interaction logs from database
+    df_raw = advisor_logic.get_analytics_df()
+    if df_raw is None or df_raw.empty:
+        st.warning("No interactions registered yet. Start a conversation to generate analytics!")
         return
+        
+    df_raw['timestamp'] = pd.to_datetime(df_raw['timestamp'])
     
-    fig_intents, fig_sentiment, fig_dist, avg_sentiment, metrics = data
+    # 🔍 Interactive Filters Expander
+    with st.expander("🔍 Interactive Analytics Filters", expanded=True):
+        f_col1, f_col2, f_col3 = st.columns(3)
+        with f_col1:
+            time_option = st.selectbox(
+                "Time Period",
+                ["All Time", "Last 24 Hours", "Last 7 Days", "Last 30 Days"]
+            )
+        with f_col2:
+            all_intents = sorted(df_raw['intent'].unique().tolist())
+            intents_selected = st.multiselect(
+                "Filter by Student Intent",
+                all_intents,
+                default=[]
+            )
+        with f_col3:
+            df_raw['sentiment_cat'] = df_raw['sentiment'].apply(
+                lambda x: 'Positive' if x > 0.1 else ('Negative' if x < -0.1 else 'Neutral')
+            )
+            sentiments_selected = st.multiselect(
+                "Filter by Sentiment",
+                ["Positive", "Neutral", "Negative"],
+                default=[]
+            )
+            
+    # Apply filters to data
+    df = df_raw.copy()
+    
+    # Time filter
+    if time_option != "All Time":
+        now_utc = pd.Timestamp.utcnow().tz_localize(None)
+        df['timestamp_naive'] = df['timestamp'].dt.tz_localize(None)
+        if time_option == "Last 24 Hours":
+            df = df[df['timestamp_naive'] >= now_utc - pd.Timedelta(days=1)]
+        elif time_option == "Last 7 Days":
+            df = df[df['timestamp_naive'] >= now_utc - pd.Timedelta(days=7)]
+        elif time_option == "Last 30 Days":
+            df = df[df['timestamp_naive'] >= now_utc - pd.Timedelta(days=30)]
+            
+    # Intent filter
+    if intents_selected:
+        df = df[df['intent'].isin(intents_selected)]
+        
+    # Sentiment filter
+    if sentiments_selected:
+        df = df[df['sentiment_cat'].isin(sentiments_selected)]
+        
+    # Handle empty filtered state
+    if df.empty:
+        st.info("No records match the current filter selection.")
+        return
 
-    # 1. KPI Ribbon
-    kpi1, kpi2, kpi3 = st.columns(3)
+    # 1. KPI Ribbon (4 Columns)
+    kpi1, kpi2, kpi3, kpi4 = st.columns(4)
     with kpi1:
-        st.metric("Total Inquiries", metrics['total'], delta=None)
+        st.metric("Total Inquiries", len(df))
     with kpi2:
-        sentiment_label = "Positive" if avg_sentiment > 0.1 else ("Negative" if avg_sentiment < -0.1 else "Neutral")
-        st.metric("Average Sentiment", f"{avg_sentiment:.2f}", delta=sentiment_label)
+        st.metric("Unique Students", df['user_id'].nunique())
     with kpi3:
-        st.metric("Top Student Concern", metrics['top'].replace('_', ' ').title())
+        avg_sentiment = df['sentiment'].mean()
+        sentiment_label = "Positive" if avg_sentiment > 0.1 else ("Negative" if avg_sentiment < -0.1 else "Neutral")
+        st.metric("Average Sentiment", f"{avg_sentiment:+.2f}", delta=sentiment_label)
+    with kpi4:
+        ai_resolved = len(df[df['intent'] == 'general_inquiry'])
+        ai_rate = (ai_resolved / len(df)) * 100 if len(df) > 0 else 0.0
+        st.metric("AI Resolver Rate", f"{ai_rate:.1f}%")
 
     st.markdown("---")
 
-    # 2. Primary Analytics Row
-    col1, col2 = st.columns([1, 1.5])
-    with col1:
+    # 2. Charts Layout - Row 1
+    chart_col1, chart_col2 = st.columns(2)
+    
+    with chart_col1:
         with st.container(border=True):
-            st.plotly_chart(fig_intents, width="stretch")
-    with col2:
+            st.markdown("##### 🎯 Intent Distribution")
+            intent_counts = df['intent'].value_counts().reset_index()
+            intent_counts.columns = ['Intent', 'Count']
+            fig_intents = px.pie(
+                intent_counts,
+                values='Count',
+                names='Intent',
+                hole=0.6,
+                color_discrete_sequence=px.colors.qualitative.Safe
+            )
+            fig_intents.update_traces(textposition='inside', textinfo='percent+label')
+            fig_intents.update_layout(
+                showlegend=False,
+                margin=dict(t=10, b=10, l=10, r=10),
+                height=280
+            )
+            st.plotly_chart(fig_intents, theme="streamlit", width="stretch")
+            
+    with chart_col2:
         with st.container(border=True):
-            st.plotly_chart(fig_dist, width="stretch")
+            st.markdown("##### 🎭 Sentiment Volume")
+            sentiment_counts = df['sentiment_cat'].value_counts().reset_index()
+            sentiment_counts.columns = ['Sentiment', 'Count']
+            color_map = {'Positive': '#2e7d32', 'Neutral': '#757575', 'Negative': '#c62828'}
+            fig_dist = px.bar(
+                sentiment_counts,
+                x='Sentiment',
+                y='Count',
+                color='Sentiment',
+                color_discrete_map=color_map,
+                category_orders={"Sentiment": ["Positive", "Neutral", "Negative"]}
+            )
+            fig_dist.update_layout(
+                showlegend=False,
+                xaxis_title=None,
+                yaxis_title="Queries",
+                margin=dict(t=10, b=10, l=10, r=10),
+                height=280
+            )
+            st.plotly_chart(fig_dist, theme="streamlit", width="stretch")
 
-    # 3. Time Series Analytics
-    with st.container(border=True):
-        st.plotly_chart(fig_sentiment, width="stretch")
+    # 3. Charts Layout - Row 2
+    chart_col3, chart_col4 = st.columns(2)
+    
+    with chart_col3:
+        with st.container(border=True):
+            st.markdown("##### 📈 Sentiment Trend Over Time")
+            df_sorted = df.sort_values(by='timestamp')
+            df_sorted['Rolling Sentiment'] = df_sorted['sentiment'].rolling(
+                window=max(1, len(df_sorted)//5), min_periods=1
+            ).mean()
+            fig_trend = px.area(
+                df_sorted,
+                x='timestamp',
+                y='Rolling Sentiment',
+                color_discrete_sequence=['#1976d2']
+            )
+            fig_trend.update_layout(
+                xaxis_title=None,
+                yaxis_title="Avg Sentiment (Rolling)",
+                margin=dict(t=10, b=10, l=10, r=10),
+                height=280
+            )
+            st.plotly_chart(fig_trend, theme="streamlit", width="stretch")
+            
+    with chart_col4:
+        with st.container(border=True):
+            st.markdown("##### ⏰ Student Peak Engagement Hours")
+            df['Hour'] = df['timestamp'].dt.hour
+            hour_counts = df['Hour'].value_counts().reindex(range(24), fill_value=0).reset_index()
+            hour_counts.columns = ['Hour', 'Queries']
+            fig_hours = px.bar(
+                hour_counts,
+                x='Hour',
+                y='Queries',
+                color='Queries',
+                color_continuous_scale=px.colors.sequential.Tealgrn
+            )
+            fig_hours.update_layout(
+                xaxis=dict(tickmode='linear', tick0=0, dtick=4),
+                xaxis_title="Hour of Day (24h)",
+                yaxis_title="Queries",
+                coloraxis_showscale=False,
+                margin=dict(t=10, b=10, l=10, r=10),
+                height=280
+            )
+            st.plotly_chart(fig_hours, theme="streamlit", width="stretch")
+
+    # 4. Critical Support Alert (Sentiment < -0.3)
+    critical_df = df[df['sentiment'] < -0.3].sort_values(by='timestamp', ascending=False)
+    if not critical_df.empty:
+        st.error(f"⚠️ **Academic Support Alert:** Found {len(critical_df)} inquiries with high negative sentiment. Advisors should check these queries.")
+        with st.expander("🔴 View Flagged Student Queries", expanded=False):
+            for _, row in critical_df.head(5).iterrows():
+                st.markdown(f"**Student ID:** `{row['user_id']}` | **Time:** `{row['timestamp'].strftime('%Y-%m-%d %H:%M')}`")
+                st.markdown(f"- **Query:** *\"{row['query']}\"*")
+                st.markdown(f"- **Response:** *\"{row['response']}\"*")
+                st.markdown(f"- **Sentiment:** `{row['sentiment']:.2f}` | **Intent:** `{row['intent']}`")
+                st.markdown("---")
+
+    # 5. Searchable Interactive Data Log
+    st.markdown("---")
+    st.subheader("📋 Searchable Interaction Log")
+    
+    display_df = df.copy()
+    display_df['Time'] = display_df['timestamp'].dt.strftime('%Y-%m-%d %H:%M:%S')
+    display_df = display_df[['Time', 'user_id', 'query', 'intent', 'sentiment', 'response']].rename(columns={
+        'user_id': 'Student ID',
+        'query': 'Student Query',
+        'intent': 'Identified Intent',
+        'sentiment': 'Sentiment Score',
+        'response': 'Bot Response'
+    }).sort_values(by='Time', ascending=False)
+    
+    st.dataframe(display_df, width="stretch")
 
 if __name__ == "__main__":
     main()
