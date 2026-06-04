@@ -20,12 +20,12 @@ try:
     PUTER_TOKEN = st.secrets.get("PUTER_TOKEN", os.getenv("PUTER_TOKEN", "")).strip()
     PUTER_API_ENDPOINT = st.secrets.get("PUTER_API_ENDPOINT", os.getenv("PUTER_API_ENDPOINT", "https://api.puter.com/v1"))
     OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))
-    PUTER_AI_MODEL = st.secrets.get("PUTER_AI_MODEL", os.getenv("PUTER_AI_MODEL", "gpt-5.5"))
+    PUTER_AI_MODEL = st.secrets.get("PUTER_AI_MODEL", os.getenv("PUTER_AI_MODEL", "gpt-4o-mini"))
 except Exception:
     PUTER_TOKEN = os.getenv("PUTER_TOKEN", "").strip()
     PUTER_API_ENDPOINT = os.getenv("PUTER_API_ENDPOINT", "https://api.puter.com/v1")
     OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-    PUTER_AI_MODEL = os.getenv("PUTER_AI_MODEL", "gpt-5.5")
+    PUTER_AI_MODEL = os.getenv("PUTER_AI_MODEL", "gpt-4o-mini")
 
 
 class QuantumBridgeService:
@@ -126,7 +126,7 @@ class QuantumBridgeService:
     
     async def _openai_fallback(self, prompt: str) -> str:
         if not OPENAI_API_KEY:
-            return "Puter.js client-side integration is fully operational. Running GPT-5.5 directly in your browser without requiring server-side API keys."
+            return "Puter.js client-side integration is fully operational. Running gpt-4o-mini directly in your browser without requiring server-side API keys."
 
         try:
             import openai
@@ -209,7 +209,7 @@ def puter_client_chat(prompt: str, key: str = None) -> Optional[str]:
             pass
         return puter_ai_chat_sync(prompt)
 
-    model = os.getenv("PUTER_AI_MODEL", "gpt-5.5")
+    model = os.getenv("PUTER_AI_MODEL", "gpt-4o-mini")
     
     # Retrieve PUTER_TOKEN securely from environment or streamlit secrets
     puter_token = os.getenv("PUTER_TOKEN", "").strip()

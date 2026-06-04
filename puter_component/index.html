@@ -3,8 +3,6 @@
 <head>
   <meta charset="utf-8">
   <title>Puter Client-Side AI Bridge</title>
-  <!-- Load Streamlit component library -->
-  <script src="https://cdn.jsdelivr.net/gh/streamlit/component-lib@v1.0.0/streamlit-component-lib.js"></script>
   <!-- Load Puter.js library -->
   <script src="https://js.puter.com/v2/"></script>
 </head>
@@ -12,22 +10,27 @@
   <script>
     let hasSent = false;
     
-    // Define initialization function
-    function initializeComponent() {
-      if (!window.Streamlit) {
-        // Retry in 50ms if Streamlit is not loaded yet
-        setTimeout(initializeComponent, 50);
-        return;
-      }
-      
-      // Set iframe height to 0 to make it invisible
-      Streamlit.setFrameHeight(0);
-      
-      // Register the Streamlit Render Event
-      Streamlit.events.addEventListener(Streamlit.RENDER_EVENT, function(event) {
-        const prompt = event.detail.args.prompt;
-        const model = event.detail.args.model || "gpt-5.5";
-        const puterToken = event.detail.args.puter_token;
+    // Helper function to send message to Streamlit
+    function sendToStreamlit(type, payload = {}) {
+      window.parent.postMessage({
+        isStreamlitMessage: true,
+        type: type,
+        ...payload
+      }, "*");
+    }
+
+    // Initialize immediately - DO NOT wait for the window load event or jsdelivr!
+    // Signal readiness instantly so Streamlit never throws "having trouble loading" error.
+    sendToStreamlit("streamlit:componentReady", { apiVersion: 1 });
+    sendToStreamlit("streamlit:setFrameHeight", { height: 0 });
+
+    // Listen for render events from Streamlit
+    window.addEventListener("message", function(event) {
+      if (event.data && event.data.type === "streamlit:render") {
+        const args = event.data.args || {};
+        const prompt = args.prompt;
+        const model = args.model || "gpt-4o-mini";
+        const puterToken = args.puter_token;
         
         if (puterToken) {
           try {
@@ -49,24 +52,29 @@
         
         if (prompt && !hasSent) {
           hasSent = true;
-          // Make the frontend call directly using Puter.js in the browser!
-          puter.ai.chat(prompt, { model: model })
-            .then(function(response) {
-              const textResponse = response.text || response.message || response.toString();
-              Streamlit.setComponentValue(textResponse);
-            })
-            .catch(function(error) {
-              Streamlit.setComponentValue("Error from Puter.js: " + error.toString());
-            });
+          
+          // Function to execute the Puter AI chat
+          function executePuterChat() {
+            if (!window.puter || !window.puter.ai) {
+              // If Puter.js is not loaded yet, wait and retry
+              setTimeout(executePuterChat, 50);
+              return;
+            }
+            
+            puter.ai.chat(prompt, { model: model })
+              .then(function(response) {
+                const textResponse = response.text || response.message || response.toString();
+                sendToStreamlit("streamlit:setComponentValue", { value: textResponse });
+              })
+              .catch(function(error) {
+                sendToStreamlit("streamlit:setComponentValue", { value: "Error from Puter.js: " + error.toString() });
+              });
+          }
+          
+          executePuterChat();
         }
-      });
-      
-      // Signal to Streamlit that the component is loaded and ready
-      Streamlit.setComponentReady();
-    }
-    
-    // Run initialization on load
-    window.addEventListener('load', initializeComponent);
+      }
+    });
   </script>
 </body>
 </html>

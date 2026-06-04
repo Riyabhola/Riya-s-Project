@@ -222,24 +222,34 @@ def handle_query(user_id, query):
         return "__USE_PUTER__", intent, sentiment
 
     if SessionLocal:
-        db = SessionLocal()
-        try:
-            db.add(Interaction(user_id=user_id, query=query, intent=intent, response=response, sentiment=sentiment))
-            db.commit()
-        finally: db.close()
+        import threading
+        def db_write():
+            db = SessionLocal()
+            try:
+                db.add(Interaction(user_id=user_id, query=query, intent=intent, response=response, sentiment=sentiment))
+                db.commit()
+            except Exception as e:
+                print(f"Database write error: {e}")
+            finally:
+                db.close()
+        threading.Thread(target=db_write, daemon=True).start()
     
     return response, intent, sentiment
 
 def log_interaction(user_id, query, intent, response, sentiment):
-    """Logs the client-side Puter AI interaction into Aiven PostgreSQL."""
+    """Logs the client-side Puter AI interaction into Aiven PostgreSQL in a background thread."""
     if SessionLocal:
-        db = SessionLocal()
-        try:
-            db.add(Interaction(user_id=user_id, query=query, intent=intent, response=response, sentiment=sentiment))
-            db.commit()
-        except Exception as e:
-            print(f"log_interaction error: {e}")
-        finally: db.close()
+        import threading
+        def db_write():
+            db = SessionLocal()
+            try:
+                db.add(Interaction(user_id=user_id, query=query, intent=intent, response=response, sentiment=sentiment))
+                db.commit()
+            except Exception as e:
+                print(f"log_interaction database error: {e}")
+            finally:
+                db.close()
+        threading.Thread(target=db_write, daemon=True).start()
 
 
 def get_analytics_data():
