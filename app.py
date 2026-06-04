@@ -9,6 +9,8 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv(override=True)
 
+PUTER_JS_MODEL = os.getenv("PUTER_JS_MODEL", "gpt-5.5")
+
 # Page Configuration
 st.set_page_config(page_title="LPU Academic Advisor", layout="wide")
 
@@ -26,7 +28,7 @@ if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
 
 
-def run_puter_js(prompt: str):
+def run_puter_js(prompt: str, model: str = PUTER_JS_MODEL):
     """Render Puter.js in the browser and display the AI response directly in the component."""
     html = f"""
     <div id='puter-status' style='font-family: sans-serif; color: #111; padding: 12px;'>Initializing Puter.js...</div>
@@ -35,27 +37,55 @@ def run_puter_js(prompt: str):
       async function normalizeResult(result) {{
         if (result === null || result === undefined) return '';
         if (typeof result === 'object') {{
-          return result.text || result.message || JSON.stringify(result, null, 2);
+          return result.text || result.message || (result.message && result.message.content) || JSON.stringify(result, null, 2);
         }}
         return result.toString();
       }}
+
+      async function loadPuterScript() {{
+        if (window.puter && window.puter.ai && window.puter.ai.chat) return;
+        return new Promise((resolve, reject) => {{
+          const existing = document.getElementById('puter-js-script');
+          if (existing) {{
+            existing.onload = () => resolve();
+            existing.onerror = () => reject(new Error('Failed to load existing puter.js script'));
+            return;
+          }}
+          const script = document.createElement('script');
+          script.id = 'puter-js-script';
+          script.src = 'https://js.puter.com/v2/';
+          script.async = true;
+          script.defer = true;
+          script.onload = () => resolve();
+          script.onerror = () => reject(new Error('Failed to load puter.js'));
+          (document.head || document.body || document.documentElement).appendChild(script);
+        }});
+      }}
+
       async function runPuter() {{
-        const outputNode = document.getElementById('puter-output');
         const statusNode = document.getElementById('puter-status');
+        const outputNode = document.getElementById('puter-output');
+        const userPrompt = {json.dumps(prompt)};
+        const modelName = {json.dumps(model)};
+
         try {{
           statusNode.innerText = 'Loading Puter.js...';
-          const userPrompt = {json.dumps(prompt)};
+          await loadPuterScript();
           if (!window.puter || !window.puter.ai || !window.puter.ai.chat) {{
-            await new Promise((resolve, reject) => {{
-              const script = document.createElement('script');
-              script.src = 'https://js.puter.com/v2/';
-              script.onload = () => resolve();
-              script.onerror = () => reject(new Error('Failed to load puter.js'));
-              document.head.appendChild(script);
-            }});
+            throw new Error('Puter SDK did not initialize correctly');
           }}
-          statusNode.innerText = 'Using Puter.js for AI response...';
-          const response = await window.puter.ai.chat(userPrompt);
+
+          statusNode.innerText = `Using Puter.js model ${modelName} for AI response...`;
+          let response;
+          try {{
+            response = await window.puter.ai.chat({{
+              model: modelName,
+              messages: [{{ role: 'user', content: userPrompt }}]
+            }});
+          }} catch (firstError) {{
+            response = await window.puter.ai.chat(userPrompt);
+          }}
+
           const normalized = await normalizeResult(response);
           statusNode.innerText = '✅ Free Puter.js AI response';
           outputNode.innerText = normalized || 'No response received from Puter.js.';
@@ -67,7 +97,7 @@ def run_puter_js(prompt: str):
       runPuter();
     </script>
     """
-    return components.html(html, height=360, scrolling=True)
+    return components.html(html, height=420, scrolling=True)
 
 def main():
     st.sidebar.title("🦁 LPU Advisor Hub")
@@ -117,25 +147,26 @@ def show_chat():
             with st.status("🦁 Advisor is searching...", expanded=False) as status:
                 res, intent, sentiment = advisor_logic.handle_query(st.session_state.user_id, prompt)
                 status.update(label="✅ Guidance Found", state="complete")
-            
+
             use_puter = False
             p_prompt = ""
-            # If the initial response is too short or no policy found, enhance with AI
-            should_use_puter = isinstance(res, str) and (
-                len(res) < 50 or
-                "No policy" in res or
-                "No matching" in res or
-                (intent == "identity" and any(term in prompt.lower() for term in ["where", "were you", "location", "been"]))
-            )
+            # Use Puter.js in production for substantive LPU academic queries
+            should_use_puter = isinstance(res, str) and intent in {
+                "general_inquiry",
+                "query_policy",
+                "get_course_recommendation",
+                "identity"
+            }
+
             if should_use_puter:
                 use_puter = True
                 p_prompt = f"As an LPU Advisor, answer this query using university context: {prompt}"
                 st.markdown("**Using free Puter.js AI for enhanced response below.**")
-                run_puter_js(p_prompt)
-                res = "(Puter.js response is rendered below in the browser component.)"
+                run_puter_js(p_prompt, PUTER_JS_MODEL)
+                res = "(Puter.js response is rendered in the browser component below.)"
             else:
                 st.markdown(res)
-            
+
             st.session_state.messages.append({"role": "assistant", "content": res, "use_puter": use_puter, "puter_prompt": p_prompt})
 
 def show_dashboard():
