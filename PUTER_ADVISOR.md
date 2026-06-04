@@ -54,9 +54,11 @@ Result: Users saw login prompts ❌
 ### AI Integration Layer
 ```
 ┌──────────────────────────────────────┐
-│   Puter AI (Primary)                 │
-│   - Server-side token auth           │
-│   - No user popups                   │
+│   Puter.js (Primary)                 │
+│   - Free Frontend AI Access          │
+│   - GPT-5.5, GPT-5.4, GPT Image      │
+│   - No OpenAI API key required       │
+│   - Server-side token handshake      │
 │   - Response time: < 1s              │
 │   Status: ✅ Operational             │
 └──────────────┬───────────────────────┘
@@ -72,7 +74,7 @@ Result: Users saw login prompts ❌
 └──────────────────────────────────────┘
 ```
 
-**Key Achievement:** Seamless bypass with NO login prompts ✅
+**Key Achievement:** Seamless bypass with NO login prompts and free access to high-end models ✅
 
 ### Database Layer
 ```
