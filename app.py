@@ -5,7 +5,7 @@ import advisor_logic
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
 # Page Configuration
 st.set_page_config(page_title="LPU Academic Advisor", layout="wide")
