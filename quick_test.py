@@ -11,7 +11,7 @@ print("=" * 70)
 print("\n1. Testing environment configuration...")
 from dotenv import load_dotenv
 import os
-load_dotenv()
+load_dotenv(override=True)
 
 puter_token = os.getenv("PUTER_MASTER_TOKEN", "").strip()
 db_url = os.getenv("DATABASE_URL", "").strip()

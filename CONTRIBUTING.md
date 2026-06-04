@@ -21,7 +21,8 @@ First off, thank you for considering contributing to this project!
 ## Development Setup
 1. Clone the repo.
 2. Install dependencies: `pip install -r requirements.txt`
-3. Run the app: `streamlit run app.py`
+3. Configure environment: `copy .env.example .env` and fill in your credentials.
+4. Run the app: `streamlit run app.py`
 
 ## Project Structure
 - `app.py`: Main entry point (Streamlit UI).
