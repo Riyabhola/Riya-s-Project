@@ -185,18 +185,34 @@ def is_ambiguous_query_response(response: str) -> bool:
 LPU_PROMPT = "You are the LPU AI Academic Advisor. Provide precise academic guidance based on LPU policies."
 
 def handle_query(user_id, query):
+    import re
     text = query.lower()
     sentiment = TextBlob(query).sentiment.polarity
+    
+    # Tokenize text into words for precise keyword matching (avoiding substring bugs like "hi" matching "high")
+    words = re.findall(r'\b\w+\b', text)
+    tokens = set(words)
+    
+    def matches_intent(keywords):
+        for k in keywords:
+            if ' ' in k:
+                if k in text:
+                    return True
+            else:
+                if k in tokens:
+                    return True
+        return False
+
     intent = "general_inquiry"
-    if any(k in text for k in ["name", "who are you", "yourself", "where", "were you", "location", "been"]):
+    if matches_intent(["who are you", "your name", "about yourself", "yourself", "who created you", "who made you"]):
         intent = "identity"
-    elif any(k in text for k in ["recommend", "course", "suggest", "study"]):
+    elif matches_intent(["recommend", "course", "courses", "suggest", "study", "studies"]):
         intent = "get_course_recommendation"
-    elif any(k in text for k in ["policy", "rule", "grading", "attendance", "scholarship"]):
+    elif matches_intent(["policy", "policies", "rule", "rules", "grading", "attendance", "scholarship", "scholarships"]):
         intent = "query_policy"
-    elif any(k in text for k in ["appointment", "schedule", "book"]):
+    elif matches_intent(["appointment", "appointments", "schedule", "book", "booking", "meet", "meeting"]):
         intent = "book_appointment"
-    elif any(k in text for k in ["hi", "hello", "hey"]):
+    elif matches_intent(["hi", "hello", "hey", "greetings", "yo"]):
         intent = "greeting"
 
     context, response = None, None

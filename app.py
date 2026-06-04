@@ -127,7 +127,12 @@ def show_chat():
 
     # Client-Side Puter.js Flow
     if st.session_state.current_prompt is not None:
-        p_prompt = f"As an LPU Advisor, answer this query using university context: {st.session_state.current_prompt}"
+        p_prompt = (
+            "You are the LPU AI Academic Advisor. Answer the student's query professionally.\n"
+            "- If the query is related to LPU policies, courses, admissions, or campus life, answer it using relevant LPU context.\n"
+            "- If the query is a general question (e.g. math, general knowledge, programming, general career guidance), answer it directly, accurately, and naturally. Do NOT force LPU context or university metaphors onto simple general questions.\n\n"
+            f"Query: {st.session_state.current_prompt}"
+        )
         
         # Call client-side custom component loaded with Puter.js
         client_response = puter_client_chat(prompt=p_prompt, key=f"puter_call_{len(st.session_state.messages)}")
