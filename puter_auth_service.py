@@ -67,9 +67,11 @@ class QuantumBridgeService:
         
         if token:
             try:
+                # Target Puter's official OpenAI-compatible completions endpoint to avoid 404
+                url = "https://api.puter.com/puterai/openai/v1/chat/completions"
                 async with httpx.AsyncClient() as client:
                     resp = await client.post(
-                        f"{self.api_endpoint}/ai/chat",
+                        url,
                         headers={
                             "Authorization": f"Bearer {token}",
                             "Content-Type": "application/json"
@@ -77,24 +79,19 @@ class QuantumBridgeService:
                         json={
                             "messages": [{"role": "user", "content": prompt}],
                             "model": PUTER_AI_MODEL,
-                            "stream": False,
                         },
                         timeout=30
                     )
                     data = resp.json() if resp.content else {}
                     if resp.status_code == 200:
-                        if isinstance(data, dict):
-                            result = data.get("text") or data.get("message")
-                            if not result and "choices" in data:
-                                choices = data.get("choices") or []
-                                if isinstance(choices, list) and choices:
-                                    first_choice = choices[0] if isinstance(choices[0], dict) else {}
-                                    if isinstance(first_choice.get("message"), dict):
-                                        result = first_choice["message"].get("content")
-                                    else:
-                                        result = first_choice.get("text") or first_choice.get("message")
-                            if result:
-                                return str(result)
+                        if isinstance(data, dict) and "choices" in data:
+                            choices = data.get("choices") or []
+                            if isinstance(choices, list) and choices:
+                                first_choice = choices[0] if isinstance(choices[0], dict) else {}
+                                if isinstance(first_choice.get("message"), dict):
+                                    result = first_choice["message"].get("content")
+                                    if result:
+                                        return str(result)
                         return str(data)
                     else:
                         self.last_error = f"Puter API status {resp.status_code}: {data.get('message') or data.get('error') or resp.text}"

@@ -63,7 +63,7 @@
           if (puterToken) {
             // --- MODE 1: Token-based direct REST fetch (100% Popup-free) ---
             console.log("Puter Bridge: Using token-based REST API bridge.");
-            fetch("https://api.puter.com/v1/ai/chat", {
+            fetch("https://api.puter.com/puterai/openai/v1/chat/completions", {
               method: "POST",
               headers: {
                 "Authorization": "Bearer " + puterToken,
@@ -71,8 +71,7 @@
               },
               body: JSON.stringify({
                 messages: [{ role: "user", content: prompt }],
-                model: model,
-                stream: false
+                model: model
               })
             })
             .then(function(res) {
@@ -83,15 +82,12 @@
             })
             .then(function(data) {
               let result = "";
-              if (data && typeof data === 'object') {
-                result = data.text || data.message || "";
-                if (!result && data.choices && data.choices.length > 0) {
-                  const choice = data.choices[0];
-                  if (choice.message && choice.message.content) {
-                    result = choice.message.content;
-                  } else {
-                    result = choice.text || choice.message || "";
-                  }
+              if (data && typeof data === 'object' && data.choices && data.choices.length > 0) {
+                const choice = data.choices[0];
+                if (choice.message && choice.message.content) {
+                  result = choice.message.content;
+                } else {
+                  result = choice.text || choice.message || "";
                 }
               }
               if (!result) {
