@@ -65,26 +65,28 @@ def main():
             filter: none !important;
         }
 
-        /* Sidebar Styling */
+        /* Sidebar Styling - Premium Light Grey */
         section[data-testid="stSidebar"] {
-            background-color: #0b0f19 !important; /* Dark rich navy */
-            border-right: 1px solid #1e293b !important;
+            background-color: #f8fafc !important; /* Premium light grey (Slate 50) */
+            border-right: 1px solid #e2e8f0 !important;
         }
         section[data-testid="stSidebar"] h1, 
         section[data-testid="stSidebar"] h2, 
         section[data-testid="stSidebar"] h3, 
-        section[data-testid="stSidebar"] span {
-            color: #ffffff !important;
+        section[data-testid="stSidebar"] span,
+        section[data-testid="stSidebar"] label,
+        section[data-testid="stSidebar"] label p {
+            color: #0f172a !important; /* Dark slate text for high contrast */
         }
         section[data-testid="stSidebar"] p {
-            color: #94a3b8 !important;
+            color: #475569 !important; /* Slate 600 */
         }
 
         /* Branded custom buttons in sidebar */
         section[data-testid="stSidebar"] button {
-            background-color: #111827 !important;
-            color: #e2e8f0 !important;
-            border: 1px solid #1f2937 !important;
+            background-color: #ffffff !important; /* White buttons */
+            color: #0f172a !important;
+            border: 1px solid #cbd5e1 !important; /* Slate 300 */
             border-radius: 8px !important;
             font-weight: 500 !important;
             transition: all 0.2s ease-in-out !important;
@@ -95,8 +97,8 @@ def main():
         section[data-testid="stSidebar"] button:hover {
             border-color: #ea580c !important; /* LPU Orange theme */
             color: #ea580c !important;
-            background-color: #1c1917 !important;
-            box-shadow: 0 0 10px rgba(234, 88, 12, 0.15) !important;
+            background-color: #fff7ed !important; /* Light orange tint */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
         }
 
         /* Main Headers color */
