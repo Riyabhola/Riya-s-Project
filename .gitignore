@@ -153,3 +153,4 @@ cython_debug/
 # Project specific ignores
 data/*.db
 data/chroma_db/
+.streamlit/secrets.toml

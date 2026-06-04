@@ -15,12 +15,17 @@ import streamlit as st
 
 load_dotenv(override=True)
 
-# Configuration
-# Note: Use PUTER_TOKEN from .env if provided, otherwise it uses anonymous guest mode
-PUTER_TOKEN = os.getenv("PUTER_TOKEN", "").strip()
-PUTER_API_ENDPOINT = os.getenv("PUTER_API_ENDPOINT", "https://api.puter.com/v1")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-PUTER_AI_MODEL = os.getenv("PUTER_AI_MODEL", "gpt-5.5")
+# Read from Streamlit secrets first, then fall back to environment variables
+try:
+    PUTER_TOKEN = st.secrets.get("PUTER_TOKEN", os.getenv("PUTER_TOKEN", "")).strip()
+    PUTER_API_ENDPOINT = st.secrets.get("PUTER_API_ENDPOINT", os.getenv("PUTER_API_ENDPOINT", "https://api.puter.com/v1"))
+    OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))
+    PUTER_AI_MODEL = st.secrets.get("PUTER_AI_MODEL", os.getenv("PUTER_AI_MODEL", "gpt-5.5"))
+except Exception:
+    PUTER_TOKEN = os.getenv("PUTER_TOKEN", "").strip()
+    PUTER_API_ENDPOINT = os.getenv("PUTER_API_ENDPOINT", "https://api.puter.com/v1")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+    PUTER_AI_MODEL = os.getenv("PUTER_AI_MODEL", "gpt-5.5")
 
 
 class QuantumBridgeService:
