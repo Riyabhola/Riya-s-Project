@@ -22,6 +22,13 @@ os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
 
 # --- Database & Knowledge Base (Aiven PostgreSQL Only) ---
 DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+if not DATABASE_URL:
+    try:
+        DATABASE_URL = st.secrets.get("DATABASE_URL", "").strip()
+    except Exception:
+        DATABASE_URL = None
+
+DATABASE_URL = DATABASE_URL or None
 
 # Validate and normalize DATABASE_URL
 if DATABASE_URL:

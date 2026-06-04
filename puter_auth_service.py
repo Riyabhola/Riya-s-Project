@@ -20,7 +20,7 @@ load_dotenv(override=True)
 PUTER_TOKEN = os.getenv("PUTER_TOKEN", "").strip()
 PUTER_API_ENDPOINT = os.getenv("PUTER_API_ENDPOINT", "https://api.puter.com/v1")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-PUTER_AI_MODEL = os.getenv("PUTER_AI_MODEL", "gpt-4o-mini")
+PUTER_AI_MODEL = os.getenv("PUTER_AI_MODEL", "gpt-5.5")
 
 
 class QuantumBridgeService:
