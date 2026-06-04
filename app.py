@@ -44,9 +44,18 @@ if "current_sentiment" not in st.session_state:
 
 
 def main():
-    # Professional UX: Disable the default Streamlit grey/fade-out overlay during execution
+    # Professional UX styling matching premium university standards
     st.markdown("""
         <style>
+        /* Import premium font */
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        
+        /* Apply fonts */
+        html, body, [data-testid="stAppViewContainer"], [class*="css"] {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        }
+
+        /* Prevent opacity fading on reruns */
         div[data-stale="true"] {
             opacity: 1 !important;
             filter: none !important;
@@ -54,6 +63,77 @@ def main():
         [data-stale="true"] > div {
             opacity: 1 !important;
             filter: none !important;
+        }
+
+        /* Sidebar Styling */
+        section[data-testid="stSidebar"] {
+            background-color: #0b0f19 !important; /* Dark rich navy */
+            border-right: 1px solid #1e293b !important;
+        }
+        section[data-testid="stSidebar"] h1, 
+        section[data-testid="stSidebar"] h2, 
+        section[data-testid="stSidebar"] h3, 
+        section[data-testid="stSidebar"] span {
+            color: #ffffff !important;
+        }
+        section[data-testid="stSidebar"] p {
+            color: #94a3b8 !important;
+        }
+
+        /* Branded custom buttons in sidebar */
+        section[data-testid="stSidebar"] button {
+            background-color: #111827 !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #1f2937 !important;
+            border-radius: 8px !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease-in-out !important;
+            width: 100% !important;
+            text-align: left !important;
+            padding: 8px 16px !important;
+        }
+        section[data-testid="stSidebar"] button:hover {
+            border-color: #ea580c !important; /* LPU Orange theme */
+            color: #ea580c !important;
+            background-color: #1c1917 !important;
+            box-shadow: 0 0 10px rgba(234, 88, 12, 0.15) !important;
+        }
+
+        /* Main Headers color */
+        h1, h2, h3, h4, h5, h6 {
+            color: #0f172a !important;
+            font-weight: 700 !important;
+        }
+        
+        /* Dark mode compatibility for main header colors */
+        @media (prefers-color-scheme: dark) {
+            h1, h2, h3, h4, h5, h6 {
+                color: #f8fafc !important;
+            }
+        }
+
+        /* Custom Cards for Stats & Visualizations */
+        div[data-testid="stMetricValue"] {
+            font-size: 2rem !important;
+            font-weight: 800 !important;
+            color: #ea580c !important; /* LPU Orange theme */
+        }
+        
+        /* Info and Chat styling */
+        .stAlert {
+            border-radius: 10px !important;
+            border-left: 5px solid #ea580c !important;
+        }
+        
+        /* Chat Input Styling */
+        div[data-testid="stChatInput"] {
+            border-radius: 12px !important;
+            border: 1px solid #e2e8f0 !important;
+        }
+        @media (prefers-color-scheme: dark) {
+            div[data-testid="stChatInput"] {
+                border-color: #334155 !important;
+            }
         }
         </style>
         """, unsafe_allow_html=True)
