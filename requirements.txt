@@ -1,6 +1,6 @@
 python-dotenv
 streamlit
-protobuf>=4.21.0
+protobuf>=7.35.0
 textblob
 pandas
 plotly
