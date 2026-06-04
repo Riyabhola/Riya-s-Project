@@ -42,6 +42,20 @@ if "current_sentiment" not in st.session_state:
 
 
 def main():
+    # Professional UX: Disable the default Streamlit grey/fade-out overlay during execution
+    st.markdown("""
+        <style>
+        div[data-stale="true"] {
+            opacity: 1 !important;
+            filter: none !important;
+        }
+        [data-stale="true"] > div {
+            opacity: 1 !important;
+            filter: none !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
     st.sidebar.title("🦁 LPU Advisor Hub")
     st.sidebar.info("Dedicated AI Advisor for Lovely Professional University students.")
     
