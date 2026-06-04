@@ -94,7 +94,7 @@ def show_chat():
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             if message.get("use_puter"):
-                st.markdown("**Using seamless server-side Puter AI for enhanced response below.**")
+                st.markdown("**AI Chatbot is responding to your query.**")
             st.markdown(message["content"])
 
     # Input
