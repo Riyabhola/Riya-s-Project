@@ -190,14 +190,14 @@ def show_dashboard():
     col1, col2 = st.columns([1, 1.5])
     with col1:
         with st.container(border=True):
-            st.plotly_chart(fig_intents, use_container_width=True)
+            st.plotly_chart(fig_intents, width="stretch")
     with col2:
         with st.container(border=True):
-            st.plotly_chart(fig_dist, use_container_width=True)
+            st.plotly_chart(fig_dist, width="stretch")
 
     # 3. Time Series Analytics
     with st.container(border=True):
-        st.plotly_chart(fig_sentiment, use_container_width=True)
+        st.plotly_chart(fig_sentiment, width="stretch")
 
 if __name__ == "__main__":
     main()
