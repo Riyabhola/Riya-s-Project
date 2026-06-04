@@ -123,7 +123,11 @@ def show_chat():
             with st.chat_message("assistant"):
                 st.info("🦁 Advisor is searching (Client-Side Puter.js)...")
         else:
-            # Log the browser-side Puter interaction in Aiven Postgres
+            # Graceful server-side fallback if client-side Puter.js fails
+            if client_response.startswith("Error from Puter.js:"):
+                client_response = advisor_logic.puter_ai_chat(p_prompt)
+                
+            # Log the Puter interaction in Aiven Postgres
             advisor_logic.log_interaction(
                 st.session_state.user_id,
                 st.session_state.current_prompt,

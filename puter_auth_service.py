@@ -15,17 +15,22 @@ import streamlit as st
 
 load_dotenv(override=True)
 
+def _clean_str(val, default=""):
+    if val is None:
+        return default
+    return str(val).strip()
+
 # Read from Streamlit secrets first, then fall back to environment variables
 try:
-    PUTER_TOKEN = st.secrets.get("PUTER_TOKEN", os.getenv("PUTER_TOKEN", "")).strip()
-    PUTER_API_ENDPOINT = st.secrets.get("PUTER_API_ENDPOINT", os.getenv("PUTER_API_ENDPOINT", "https://api.puter.com/v1"))
-    OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", ""))
-    PUTER_AI_MODEL = st.secrets.get("PUTER_AI_MODEL", os.getenv("PUTER_AI_MODEL", "gpt-4o-mini"))
+    PUTER_TOKEN = _clean_str(st.secrets.get("PUTER_TOKEN", os.getenv("PUTER_TOKEN", "")))
+    PUTER_API_ENDPOINT = _clean_str(st.secrets.get("PUTER_API_ENDPOINT", os.getenv("PUTER_API_ENDPOINT", "https://api.puter.com/v1")), "https://api.puter.com/v1")
+    OPENAI_API_KEY = _clean_str(st.secrets.get("OPENAI_API_KEY", os.getenv("OPENAI_API_KEY", "")))
+    PUTER_AI_MODEL = _clean_str(st.secrets.get("PUTER_AI_MODEL", os.getenv("PUTER_AI_MODEL", "gpt-4o-mini")), "gpt-4o-mini")
 except Exception:
-    PUTER_TOKEN = os.getenv("PUTER_TOKEN", "").strip()
-    PUTER_API_ENDPOINT = os.getenv("PUTER_API_ENDPOINT", "https://api.puter.com/v1")
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-    PUTER_AI_MODEL = os.getenv("PUTER_AI_MODEL", "gpt-4o-mini")
+    PUTER_TOKEN = _clean_str(os.environ.get("PUTER_TOKEN", ""))
+    PUTER_API_ENDPOINT = _clean_str(os.environ.get("PUTER_API_ENDPOINT", "https://api.puter.com/v1"), "https://api.puter.com/v1")
+    OPENAI_API_KEY = _clean_str(os.environ.get("OPENAI_API_KEY", ""))
+    PUTER_AI_MODEL = _clean_str(os.environ.get("PUTER_AI_MODEL", "gpt-4o-mini"), "gpt-4o-mini")
 
 
 class QuantumBridgeService:
@@ -209,17 +214,5 @@ def puter_client_chat(prompt: str, key: str = None) -> Optional[str]:
             pass
         return puter_ai_chat_sync(prompt)
 
-    model = os.getenv("PUTER_AI_MODEL", "gpt-4o-mini")
-    
-    # Retrieve PUTER_TOKEN securely from environment or streamlit secrets
-    puter_token = os.getenv("PUTER_TOKEN", "").strip()
-    if not puter_token:
-        try:
-            import streamlit as st
-            if "PUTER_TOKEN" in st.secrets:
-                puter_token = st.secrets["PUTER_TOKEN"].strip()
-        except Exception:
-            pass
-            
-    return _puter_client_chat_component(prompt=prompt, model=model, puter_token=puter_token, key=key)
+    return _puter_client_chat_component(prompt=prompt, model=PUTER_AI_MODEL, puter_token=PUTER_TOKEN, key=key)
 

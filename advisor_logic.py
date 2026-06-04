@@ -104,6 +104,9 @@ def init_online_db():
                 if not db.query(Course).filter_by(course_id=row['course_id']).first():
                     db.add(Course(course_id=row['course_id'], name=row['name'], credits=row['credits'], description=row['description']))
             db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Database initialization or seeding failed: {e}")
     finally:
         db.close()
 
@@ -217,7 +220,7 @@ def handle_query(user_id, query):
         else:
             response = "Please specify your LPU academic query."
 
-    should_use_puter = is_ambiguous_query_response(response) and intent in {"general_inquiry", "identity"}
+    should_use_puter = is_ambiguous_query_response(response)
     if should_use_puter:
         return "__USE_PUTER__", intent, sentiment
 
@@ -256,7 +259,7 @@ def get_analytics_data():
     if not SessionLocal: return None, None, None, None, None
     db = SessionLocal()
     try:
-        df = pd.read_sql(db.query(Interaction).statement, db.bind)
+        df = pd.read_sql(db.query(Interaction).statement, engine)
         if df.empty: return None, None, None, None, None
         
         # 1. Intent Distribution (Professional Pie/Donut)
