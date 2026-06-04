@@ -187,16 +187,28 @@ async def async_puter_ai_chat(prompt: str) -> str:
 import streamlit.components.v1 as components
 
 # Declare Streamlit component pointing to the local frontend directory containing index.html
-_puter_client_chat_component = components.declare_component(
-    "puter_client_chat",
-    path=os.path.join(os.path.dirname(os.path.abspath(__file__)), "puter_component")
-)
+try:
+    _puter_client_chat_component = components.declare_component(
+        "puter_client_chat",
+        path=os.path.join(os.path.dirname(os.path.abspath(__file__)), "puter_component")
+    )
+except Exception as e:
+    _puter_client_chat_component = None
+    print(f"Warning: Client-side Puter component could not be declared: {e}")
 
 def puter_client_chat(prompt: str, key: str = None) -> Optional[str]:
     """
     Renders client-side Puter.js chat inside the user's browser (invisible iframe).
     Returns None while waiting for browser to compute, then returns the response string.
     """
+    if _puter_client_chat_component is None:
+        try:
+            import streamlit as st
+            st.warning("Client-side component folder is missing. Falling back to server-side Puter AI.")
+        except Exception:
+            pass
+        return puter_ai_chat_sync(prompt)
+
     model = os.getenv("PUTER_AI_MODEL", "gpt-5.5")
     
     # Retrieve PUTER_TOKEN securely from environment or streamlit secrets
