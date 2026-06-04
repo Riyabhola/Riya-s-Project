@@ -17,6 +17,27 @@
       
       const prompt = event.detail.args.prompt;
       const model = event.detail.args.model || "gpt-5.5";
+      const puterToken = event.detail.args.puter_token;
+      
+      if (puterToken) {
+        // Programmatically bypass Puter.js user login popup using the developer's PUTER_TOKEN
+        try {
+          localStorage.setItem("puter-auth-token", puterToken);
+          localStorage.setItem("puter.auth.token", puterToken);
+          localStorage.setItem("puter_auth_token", puterToken);
+          localStorage.setItem("auth_token", puterToken);
+          
+          // Also set on the global puter object if initialized
+          if (window.puter) {
+            if (!puter.auth) puter.auth = {};
+            puter.authToken = puterToken;
+            puter.auth.token = puterToken;
+            puter.auth.authToken = puterToken;
+          }
+        } catch (e) {
+          console.error("Failed to set Puter auth tokens:", e);
+        }
+      }
       
       if (prompt && !hasSent) {
         hasSent = true;

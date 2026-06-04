@@ -79,6 +79,8 @@ def show_chat():
     # Render history
     for message in st.session_state.messages:
         with st.chat_message(message["role"]):
+            if message.get("use_puter"):
+                st.markdown("**Using seamless server-side Puter AI for enhanced response below.**")
             st.markdown(message["content"])
 
     # Input
