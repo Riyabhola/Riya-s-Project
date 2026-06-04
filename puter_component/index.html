@@ -3,8 +3,6 @@
 <head>
   <meta charset="utf-8">
   <title>Puter Client-Side AI Bridge</title>
-  <!-- Load Puter.js library -->
-  <script src="https://js.puter.com/v2/"></script>
 </head>
 <body style="margin: 0; padding: 0; background: transparent; overflow: hidden;">
   <script>
@@ -19,7 +17,7 @@
       }, "*");
     }
 
-    // Initialize immediately - DO NOT wait for the window load event or jsdelivr!
+    // Initialize immediately - DO NOT wait for any load event!
     // Signal readiness instantly so Streamlit never throws "having trouble loading" error.
     sendToStreamlit("streamlit:componentReady", { apiVersion: 1 });
     sendToStreamlit("streamlit:setFrameHeight", { height: 0 });
@@ -32,46 +30,54 @@
         const model = args.model || "gpt-4o-mini";
         const puterToken = args.puter_token;
         
-        if (puterToken) {
-          try {
-            localStorage.setItem("puter-auth-token", puterToken);
-            localStorage.setItem("puter.auth.token", puterToken);
-            localStorage.setItem("puter_auth_token", puterToken);
-            localStorage.setItem("auth_token", puterToken);
-            
-            if (window.puter) {
-              if (!puter.auth) puter.auth = {};
-              puter.authToken = puterToken;
-              puter.auth.token = puterToken;
-              puter.auth.authToken = puterToken;
-            }
-          } catch (e) {
-            console.error("Failed to set Puter auth tokens:", e);
-          }
-        }
-        
         if (prompt && !hasSent) {
           hasSent = true;
           
-          // Function to execute the Puter AI chat
-          function executePuterChat() {
-            if (!window.puter || !window.puter.ai) {
-              // If Puter.js is not loaded yet, wait and retry
-              setTimeout(executePuterChat, 50);
-              return;
-            }
-            
-            puter.ai.chat(prompt, { model: model })
-              .then(function(response) {
-                const textResponse = response.text || response.message || response.toString();
-                sendToStreamlit("streamlit:setComponentValue", { value: textResponse });
-              })
-              .catch(function(error) {
-                sendToStreamlit("streamlit:setComponentValue", { value: "Error from Puter.js: " + error.toString() });
-              });
+          if (!puterToken) {
+            sendToStreamlit("streamlit:setComponentValue", { value: "Error from Puter.js: Missing authorization token." });
+            return;
           }
           
-          executePuterChat();
+          // Perform direct CORS fetch to Puter REST API - bypassing js.puter.com login popups completely!
+          fetch("https://api.puter.com/v1/ai/chat", {
+            method: "POST",
+            headers: {
+              "Authorization": "Bearer " + puterToken,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              messages: [{ role: "user", content: prompt }],
+              model: model,
+              stream: false
+            })
+          })
+          .then(function(res) {
+            if (!res.ok) {
+              throw new Error("HTTP error " + res.status);
+            }
+            return res.json();
+          })
+          .then(function(data) {
+            let result = "";
+            if (data && typeof data === 'object') {
+              result = data.text || data.message || "";
+              if (!result && data.choices && data.choices.length > 0) {
+                const choice = data.choices[0];
+                if (choice.message && choice.message.content) {
+                  result = choice.message.content;
+                } else {
+                  result = choice.text || choice.message || "";
+                }
+              }
+            }
+            if (!result) {
+              result = JSON.stringify(data);
+            }
+            sendToStreamlit("streamlit:setComponentValue", { value: result.toString() });
+          })
+          .catch(function(error) {
+            sendToStreamlit("streamlit:setComponentValue", { value: "Error from Puter.js: " + error.toString() });
+          });
         }
       }
     });
