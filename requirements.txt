@@ -10,5 +10,5 @@ putergenai
 requests>=2.31.0
 aiohttp>=3.8.0
 openai>=1.0.0
-httpx>=0.24.0
+httpx>=0.28.1
 nest-asyncio
