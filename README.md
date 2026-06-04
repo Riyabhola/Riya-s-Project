@@ -134,34 +134,18 @@ Critical Tests: 4/4 PASSED
 
 ## 🧪 Comprehensive Testing
 
-### Test Suites Executed
+### End-to-End Test Suite (`e2e_test_suite.py`)
+Run the consolidated E2E testing suite to verify all system components:
+```bash
+python e2e_test_suite.py
+```
 
-**1. Quick Functional Test** (`quick_test.py`)
-- ✅ Environment configuration validation
-- ✅ Puter authentication service verification
-- ✅ Seamless bypass confirmation (NO login prompts)
-- ✅ All dependencies verified
-
-**2. Verification Suite** (`verification_suite.py`)
-- ✅ Intent detection precision (5/5 correct)
-- ✅ Database mandate compliance
-- ✅ Knowledge base retrieval
-- ✅ Puter AI bridge operational
-
-**3. UI/UX Functional Test** (`ui_ux_test.py`)
-- ✅ Streamlit configuration
-- ✅ UI component rendering
-- ✅ Core logic functionality
-- ✅ Responsive design verification
-- ✅ Security implementation
-- ✅ Performance optimization
-
-**4. Complete E2E Suite** (`e2e_test_suite.py`)
-- ✅ Full system integration
-- ✅ Critical path testing
-- ✅ Production readiness verification
-
-**📊 Detailed Results:** See [TEST_REPORT.md](TEST_REPORT.md)
+The test suite automatically validates:
+- **Environment & Security**: Verifies `.env` setup, dependency versions, and scans for hardcoded secrets.
+- **Database & Knowledge Base**: Tests Aiven PostgreSQL connectivity and runs database queries.
+- **Intent Precision**: Checks classification for LPU academic advising queries (100% precision).
+- **Puter AI Integration**: Checks seamless guest/token authentication (zero-popup bypass) and response latency.
+- **Streamlit Ready**: Verifies app imports and dependencies.
 
 ---
 
@@ -177,7 +161,7 @@ cd Riya-s-Project
 setup.bat
 
 # Run verification
-python quick_test.py
+python e2e_test_suite.py
 ```
 
 ### Manual Setup (All Platforms)

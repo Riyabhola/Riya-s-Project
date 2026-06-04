@@ -34,19 +34,19 @@ def print_header(text):
 
 def print_success(text):
     """Print success message"""
-    print(f"{TestColors.GREEN}✓ {text}{TestColors.END}")
+    print(f"{TestColors.GREEN}[OK] {text}{TestColors.END}")
 
 def print_error(text):
     """Print error message"""
-    print(f"{TestColors.RED}✗ {text}{TestColors.END}")
+    print(f"{TestColors.RED}[FAIL] {text}{TestColors.END}")
 
 def print_info(text):
     """Print info message"""
-    print(f"{TestColors.BLUE}ℹ {text}{TestColors.END}")
+    print(f"{TestColors.BLUE}[INFO] {text}{TestColors.END}")
 
 def print_warning(text):
     """Print warning message"""
-    print(f"{TestColors.YELLOW}⚠ {text}{TestColors.END}")
+    print(f"{TestColors.YELLOW}[WARN] {text}{TestColors.END}")
 
 # ============================================================================
 # TEST 1: ENVIRONMENT CONFIGURATION
@@ -89,7 +89,35 @@ def test_environment_config():
     else:
         print_warning("OPENAI_API_KEY: Not configured (fallback disabled)")
     
+    # Check if credentials are hardcoded in source files (Security Test)
+    print_info("Checking for hardcoded credentials in codebase...")
+    source_files = ["app.py", "advisor_logic.py", "puter_auth_service.py"]
+    hardcoded = False
+    for filename in source_files:
+        if Path(filename).exists():
+            content = Path(filename).read_text(encoding='utf-8', errors='ignore')
+            for line in content.splitlines():
+                if "PUTER_TOKEN" in line and "=" in line and ('"' in line or "'" in line) and not line.strip().startswith("#"):
+                    val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    if val and len(val) > 5 and not val.startswith("os.") and not val.startswith("DATABASE_URL") and not val.startswith("PUTER_TOKEN"):
+                        if not any(x in val for x in [".replace(", ".get(", "st.secrets"]):
+                            print_error(f"Hardcoded PUTER_TOKEN found in {filename}: {line.strip()}")
+                            hardcoded = True
+                if "DATABASE_URL" in line and "=" in line and ('"' in line or "'" in line) and not line.strip().startswith("#"):
+                    val = line.split("=", 1)[1].strip().strip('"').strip("'")
+                    if val and len(val) > 5 and ("postgres://" in val or "postgresql://" in val) and not val.startswith("os."):
+                        if not any(x in val for x in [".replace(", ".get(", "st.secrets"]):
+                            print_error(f"Hardcoded DATABASE_URL found in {filename}: {line.strip()}")
+                            hardcoded = True
+    if not hardcoded:
+        print_success("Security Check: No hardcoded credentials detected in codebase")
+        results["security_check"] = True
+    else:
+        print_warning("Security Check: Hardcoded credentials detected")
+        results["security_check"] = False
+
     return results
+
 
 # ============================================================================
 # TEST 2: IMPORT DEPENDENCIES
@@ -145,11 +173,11 @@ async def test_puter_authentication():
         if token:
             masked_token = token[:20] + "..." if len(token) > 20 else token
             print_success(f"Access token obtained: {masked_token}")
-            print_success("✓ Server-side authentication SUCCESSFUL")
+            print_success("Server-side authentication SUCCESSFUL")
             return {"puter_auth": True, "token_obtained": True}
         else:
             print_warning("Token retrieval returned None (fallback mode active)")
-            print_success("✓ Fallback authentication available")
+            print_success("Fallback authentication available")
             return {"puter_auth": True, "token_obtained": False, "fallback_active": True}
             
     except Exception as e:
@@ -188,14 +216,14 @@ def test_database_connection():
                 print_success(f"Database query successful - {count} policies found")
                 
                 db.close()
-                print_success("✓ Database connection WORKING")
+                print_success("Database connection WORKING")
                 return {"database": True, "policies": count}
             else:
                 print_error("SessionLocal not configured")
                 return {"database": False}
         else:
             print_warning("Database engine not available (DATABASE_URL not set)")
-            print_success("✓ Graceful degradation - app works without database")
+            print_success("Graceful degradation - app works without database")
             return {"database": False, "graceful_fallback": True}
             
     except Exception as e:
@@ -231,8 +259,27 @@ def test_query_logic():
         response, intent, sentiment = advisor_logic.handle_query("test-user-123", "What is the attendance policy?")
         print_success(f"handle_query successful - intent: {intent}, sentiment: {sentiment:.2f}")
         
-        print_success("✓ Query logic WORKING")
-        return {"query_logic": True, "courses_found": len(courses)}
+        # Test intent detection precision
+        print_info("Testing intent detection precision...")
+        test_cases = [
+            {"q": "attendance policy", "expected": "query_policy"},
+            {"q": "fashion courses", "expected": "get_course_recommendation"},
+            {"q": "who are you?", "expected": "identity"},
+            {"q": "book a meeting", "expected": "book_appointment"},
+            {"q": "hello", "expected": "greeting"}
+        ]
+        passed_intents = 0
+        for case in test_cases:
+            _, int_val, _ = advisor_logic.handle_query("test_user_intent", case["q"])
+            if int_val == case["expected"]:
+                print_success(f"  Q: '{case['q']}' -> {int_val}")
+                passed_intents += 1
+            else:
+                print_error(f"  Q: '{case['q']}' -> Found: {int_val}, Expected: {case['expected']}")
+        print_success(f"Intent Detection Accuracy: {passed_intents}/{len(test_cases)}")
+        
+        print_success("Query logic WORKING")
+        return {"query_logic": True, "courses_found": len(courses), "intent_accuracy": f"{passed_intents}/{len(test_cases)}"}
         
     except Exception as e:
         print_error(f"Query logic test failed: {str(e)}")
@@ -262,11 +309,11 @@ async def test_puter_ai_response():
         if response and len(response) > 20:
             print_success(f"AI Response received in {response_time:.2f}s")
             print_success(f"Response: {response[:150]}...")
-            print_success("✓ Puter AI seamless bypass WORKING (NO LOGIN PROMPT)")
+            print_success("Puter AI seamless bypass WORKING (NO LOGIN PROMPT)")
             return {"ai_response": True, "response_time": response_time}
         else:
             print_warning(f"Minimal AI response: {response}")
-            print_success("✓ Fallback AI system active")
+            print_success("Fallback AI system active")
             return {"ai_response": True, "fallback_active": True, "response_time": response_time}
             
     except Exception as e:
@@ -290,7 +337,7 @@ def test_streamlit_imports():
         import app
         print_success("app.py imported successfully")
         
-        print_success("✓ Streamlit setup VALID")
+        print_success("Streamlit setup VALID")
         return {"streamlit_ready": True}
         
     except Exception as e:
@@ -333,14 +380,10 @@ def test_file_integrity():
 async def run_all_tests():
     """Run complete E2E test suite"""
     print(f"\n{TestColors.BOLD}{TestColors.CYAN}")
-    print("""
-    ╔══════════════════════════════════════════════════════════════════╗
-    ║                                                                  ║
-    ║        🦁 LPU ACADEMIC ADVISOR - COMPLETE E2E TEST SUITE        ║
-    ║                    Seamless Puter Authentication                ║
-    ║                                                                  ║
-    ╚══════════════════════════════════════════════════════════════════╝
-    """)
+    print("=" * 70)
+    print("         LPU ACADEMIC ADVISOR - COMPLETE E2E TEST SUITE          ")
+    print("                    Seamless Puter Authentication                ")
+    print("=" * 70)
     print(TestColors.END)
     
     all_results = {}
@@ -379,10 +422,10 @@ async def run_all_tests():
     # Overall result
     print(f"\n{TestColors.BOLD}Overall Status:{TestColors.END}")
     if passed == total:
-        print(f"{TestColors.GREEN}{TestColors.BOLD}✓ ALL TESTS PASSED - READY FOR PRODUCTION{TestColors.END}")
+        print(f"{TestColors.GREEN}{TestColors.BOLD}ALL TESTS PASSED - READY FOR PRODUCTION{TestColors.END}")
         return True
     else:
-        print(f"{TestColors.YELLOW}{TestColors.BOLD}⚠ Some tests failed - check above for details{TestColors.END}")
+        print(f"{TestColors.YELLOW}{TestColors.BOLD}Some tests failed - check above for details{TestColors.END}")
         return False
 
 if __name__ == "__main__":

@@ -177,3 +177,22 @@ async def async_puter_ai_chat(prompt: str) -> str:
     """Async entry point for AI synthesis."""
     service = get_quantum_bridge()
     return await service.synthesize_response(prompt)
+
+
+# --- Client-Side Puter.js Component ---
+import streamlit.components.v1 as components
+
+# Declare Streamlit component pointing to the local frontend directory containing index.html
+_puter_client_chat_component = components.declare_component(
+    "puter_client_chat",
+    path=os.path.join(os.path.dirname(os.path.abspath(__file__)), "puter_component")
+)
+
+def puter_client_chat(prompt: str, key: str = None) -> Optional[str]:
+    """
+    Renders client-side Puter.js chat inside the user's browser (invisible iframe).
+    Returns None while waiting for browser to compute, then returns the response string.
+    """
+    model = os.getenv("PUTER_AI_MODEL", "gpt-5.5")
+    return _puter_client_chat_component(prompt=prompt, model=model, key=key)
+

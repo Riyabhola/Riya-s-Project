@@ -3,13 +3,21 @@ import os
 import uuid
 import advisor_logic
 from dotenv import load_dotenv
+from puter_auth_service import puter_client_chat
 
 # Load environment variables
 load_dotenv(override=True)
 
 
 
-os.environ["DATABASE_URL"] = st.secrets["DATABASE_URL"]
+# Set DATABASE_URL if not already present in environment
+if "DATABASE_URL" not in os.environ:
+    try:
+        if "DATABASE_URL" in st.secrets:
+            os.environ["DATABASE_URL"] = st.secrets["DATABASE_URL"]
+    except Exception:
+        pass
+
 # Page Configuration
 st.set_page_config(page_title="LPU Academic Advisor", layout="wide")
 
@@ -25,6 +33,12 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
+if "current_prompt" not in st.session_state:
+    st.session_state.current_prompt = None
+if "current_intent" not in st.session_state:
+    st.session_state.current_intent = None
+if "current_sentiment" not in st.session_state:
+    st.session_state.current_sentiment = None
 
 
 def main():
@@ -35,6 +49,9 @@ def main():
 
     if st.sidebar.button("🗑️ Clear Conversation"):
         st.session_state.messages = []
+        st.session_state.current_prompt = None
+        st.session_state.current_intent = None
+        st.session_state.current_sentiment = None
         st.rerun()
 
     st.sidebar.markdown("---")
@@ -43,8 +60,6 @@ def main():
     for ex in examples:
         if st.sidebar.button(ex):
             st.session_state.messages.append({"role": "user", "content": ex})
-            res, intent, sentiment = advisor_logic.handle_query(st.session_state.user_id, ex)
-            st.session_state.messages.append({"role": "assistant", "content": res, "use_puter": False, "puter_prompt": ""})
             st.rerun()
 
     if page == "💬 LPU Chatbot":
@@ -69,33 +84,63 @@ def show_chat():
     # Input
     if prompt := st.chat_input("How can I help you?"):
         st.session_state.messages.append({"role": "user", "content": prompt})
-        with st.chat_message("user"): st.markdown(prompt)
+        st.rerun()
 
-        with st.chat_message("assistant"):
-            with st.status("🦁 Advisor is searching...", expanded=False) as status:
-                res, intent, sentiment = advisor_logic.handle_query(st.session_state.user_id, prompt)
-                status.update(label="✅ Guidance Found", state="complete")
-
-            use_puter = False
-            p_prompt = ""
-            # Use server-side Puter AI in production for substantive LPU academic queries
-            should_use_puter = isinstance(res, str) and intent in {
-                "general_inquiry",
-                "query_policy",
-                "get_course_recommendation",
-                "identity"
-            }
-
-            if should_use_puter:
-                use_puter = True
-                p_prompt = f"As an LPU Advisor, answer this query using university context: {prompt}"
-                st.markdown("**Using seamless server-side Puter AI for enhanced response below.**")
-                res = advisor_logic.puter_ai_chat(p_prompt)
-                st.markdown(res)
+    # Chat execution state machine
+    if st.session_state.messages and st.session_state.messages[-1]["role"] == "user":
+        user_query = st.session_state.messages[-1]["content"]
+        
+        if st.session_state.current_prompt is None:
+            # Determine intent and local response
+            res, intent, sentiment = advisor_logic.handle_query(st.session_state.user_id, user_query)
+            
+            if res == "__USE_PUTER__":
+                # Set transition to client-side Puter.js flow
+                st.session_state.current_prompt = user_query
+                st.session_state.current_intent = intent
+                st.session_state.current_sentiment = sentiment
+                st.rerun()
             else:
-                st.markdown(res)
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": res,
+                    "use_puter": False,
+                    "puter_prompt": ""
+                })
+                st.rerun()
 
-            st.session_state.messages.append({"role": "assistant", "content": res, "use_puter": use_puter, "puter_prompt": p_prompt})
+    # Client-Side Puter.js Flow
+    if st.session_state.current_prompt is not None:
+        p_prompt = f"As an LPU Advisor, answer this query using university context: {st.session_state.current_prompt}"
+        
+        # Call client-side custom component loaded with Puter.js
+        client_response = puter_client_chat(prompt=p_prompt, key=f"puter_call_{len(st.session_state.messages)}")
+        
+        if client_response is None:
+            # Component is running in browser, display loader
+            with st.chat_message("assistant"):
+                st.info("🦁 Advisor is searching (Client-Side Puter.js)...")
+        else:
+            # Log the browser-side Puter interaction in Aiven Postgres
+            advisor_logic.log_interaction(
+                st.session_state.user_id,
+                st.session_state.current_prompt,
+                st.session_state.current_intent,
+                client_response,
+                st.session_state.current_sentiment
+            )
+            
+            # Save the message and reset
+            st.session_state.messages.append({
+                "role": "assistant",
+                "content": client_response,
+                "use_puter": True,
+                "puter_prompt": p_prompt
+            })
+            st.session_state.current_prompt = None
+            st.session_state.current_intent = None
+            st.session_state.current_sentiment = None
+            st.rerun()
 
 def show_dashboard():
     st.title("📊 Student Insights Dashboard")

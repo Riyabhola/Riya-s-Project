@@ -22,5 +22,5 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Run standard verification suite
-      run: python verification_suite.py
+    - name: Run complete E2E testing suite
+      run: python e2e_test_suite.py

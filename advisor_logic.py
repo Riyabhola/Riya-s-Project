@@ -217,10 +217,9 @@ def handle_query(user_id, query):
         else:
             response = "Please specify your LPU academic query."
 
-    if is_ambiguous_query_response(response) and intent in {"general_inquiry", "identity"}:
-        ai_response = puter_ai_chat(f"{LPU_PROMPT} Respond to this student query using LPU context: {query}")
-        if ai_response and not is_ambiguous_query_response(ai_response):
-            response = ai_response
+    should_use_puter = is_ambiguous_query_response(response) and intent in {"general_inquiry", "identity"}
+    if should_use_puter:
+        return "__USE_PUTER__", intent, sentiment
 
     if SessionLocal:
         db = SessionLocal()
@@ -230,6 +229,18 @@ def handle_query(user_id, query):
         finally: db.close()
     
     return response, intent, sentiment
+
+def log_interaction(user_id, query, intent, response, sentiment):
+    """Logs the client-side Puter AI interaction into Aiven PostgreSQL."""
+    if SessionLocal:
+        db = SessionLocal()
+        try:
+            db.add(Interaction(user_id=user_id, query=query, intent=intent, response=response, sentiment=sentiment))
+            db.commit()
+        except Exception as e:
+            print(f"log_interaction error: {e}")
+        finally: db.close()
+
 
 def get_analytics_data():
     if not SessionLocal: return None, None, None, None, None
