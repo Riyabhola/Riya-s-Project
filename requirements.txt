@@ -8,7 +8,7 @@ SQLAlchemy
 psycopg2-binary
 putergenai
 requests>=2.31.0
-aiohttp>=3.8.0
+aiohttp>=3.14.1
 openai>=1.0.0
 httpx>=0.24.0
 nest-asyncio
